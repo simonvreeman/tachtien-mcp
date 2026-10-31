@@ -5,6 +5,7 @@ veel*, uncountably many. Look up the word, its examples and mentions, rewrite
 vague amounts as tachtien, or ask whether something counts as tachtien.
 
 **Endpoint:** `https://mcp.tachtien.nl/mcp` (Streamable HTTP, stateless, no auth)
+**Server card:** [`/.well-known/mcp/server-card.json`](https://mcp.tachtien.nl/.well-known/mcp/server-card.json)
 
 ## Connect
 

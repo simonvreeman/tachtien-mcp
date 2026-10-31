@@ -1,11 +1,16 @@
 import { describe, it, expect } from "vitest";
 import worker from "../src/worker.js";
+import pkg from "../package.json";
 
 const fetch = (path, init) => worker.fetch(new Request(`https://mcp.tachtien.nl${path}`, init), {}, {});
 const toolsList = {
   method: "POST",
   headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
   body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+};
+const listTools = async () => {
+  const body = await (await fetch("/mcp", toolsList)).text();
+  return JSON.parse(body.split("\n").find((l) => l.startsWith("data:")).slice(5)).result.tools;
 };
 
 describe("worker", () => {
@@ -16,22 +21,40 @@ describe("worker", () => {
     const html = await res.text();
     expect(html).toContain("https://mcp.tachtien.nl/mcp");
     expect(html).toContain('href="https://tachtien.nl/"');
+    expect(html).toMatch(/<main>[\s\S]*<h1>[\s\S]*<\/main>/);
+    expect(html).toContain('<link rel="canonical" href="https://mcp.tachtien.nl/">');
+    expect(html).toContain('<meta property="og:title"');
+    expect(html).toContain('<link rel="icon" href="https://tachtien.nl/favicon.svg"');
+    expect(html).toContain('href="https://tachtien.nl/privacy"');
     expect((await fetch("/", { method: "HEAD" })).status).toBe(200);
   });
   it("sends revalidation and security headers with the info page", async () => {
     const { headers } = await fetch("/");
     expect(headers.get("cache-control")).toBe("no-cache");
-    expect(headers.get("content-security-policy")).toContain("default-src 'none'");
-    expect(headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+    const csp = headers.get("content-security-policy");
+    for (const directive of ["default-src 'none'", "img-src https://tachtien.nl", "frame-ancestors 'none'", "upgrade-insecure-requests"]) {
+      expect(csp).toContain(directive);
+    }
     expect(headers.get("x-content-type-options")).toBe("nosniff");
     expect(headers.get("x-frame-options")).toBe("DENY");
+    expect(headers.get("permissions-policy")).toContain("camera=()");
+    expect(headers.get("link")).toContain('</.well-known/mcp/server-card.json>; rel="mcp"');
+  });
+  it("answers 304 when the ETag still matches", async () => {
+    const etag = (await fetch("/")).headers.get("etag");
+    expect(etag).toMatch(/^"[0-9a-f]+"$/);
+    const res = await fetch("/", { headers: { "if-none-match": etag } });
+    expect(res.status).toBe(304);
+    expect(await res.text()).toBe("");
+    // Cloudflare weakens the ETag when it compresses, so browsers send it back as W/"...".
+    expect((await fetch("/", { headers: { "if-none-match": `W/${etag}` } })).status).toBe(304);
+    expect((await fetch("/", { headers: { "if-none-match": '"stale"' } })).status).toBe(200);
   });
   it("describes every tool and the resource on the info page", async () => {
     const html = await (await fetch("/")).text();
-    const body = await (await fetch("/mcp", toolsList)).text();
-    const { result } = JSON.parse(body.split("\n").find((l) => l.startsWith("data:")).slice(5));
-    expect(result.tools.length).toBeGreaterThan(0);
-    for (const { name } of result.tools) expect(html, name).toContain(`<dt><code>${name}</code>`);
+    const tools = await listTools();
+    expect(tools.length).toBeGreaterThan(0);
+    for (const { name } of tools) expect(html, name).toContain(`<dt><code>${name}</code>`);
     expect(html).toContain("tachtien://entry");
   });
   it("routes /mcp and /mcp/ to the MCP server", async () => {
@@ -41,8 +64,32 @@ describe("worker", () => {
       expect(await res.text()).toContain("tachtienify");
     }
   });
-  it("answers 404 elsewhere and 405 for POST /", async () => {
-    expect((await fetch("/nope")).status).toBe(404);
+  it("serves an MCP server card that matches the server", async () => {
+    const res = await fetch("/.well-known/mcp/server-card.json");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/json; charset=utf-8");
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    const card = await res.json();
+    expect(card).toMatchObject({ name: "tachtien", version: pkg.version, endpoint: "https://mcp.tachtien.nl/mcp", transport: "http", authentication: "none" });
+    expect(card.supportedProtocolVersions).toContain("2025-06-18");
+    expect(card.tools.map((t) => t.name)).toEqual((await listTools()).map((t) => t.name));
+    expect(card.resources).toEqual([expect.objectContaining({ uri: "tachtien://entry" })]);
+  });
+  it("serves security.txt and sends favicon requests to tachtien.nl", async () => {
+    const txt = await fetch("/.well-known/security.txt");
+    expect(txt.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    const body = await txt.text();
+    expect(body).toContain("Contact: mailto:simon@vreeman.com");
+    expect(body).toContain("Canonical: https://mcp.tachtien.nl/.well-known/security.txt");
+    const icon = await fetch("/favicon.ico");
+    expect(icon.status).toBe(301);
+    expect(icon.headers.get("location")).toBe("https://tachtien.nl/favicon.ico");
+  });
+  it("answers an HTML 404 with a way back, and 405 for POST /", async () => {
+    const res = await fetch("/nope");
+    expect(res.status).toBe(404);
+    expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    expect(await res.text()).toContain('<a href="/">');
     expect((await fetch("/", { method: "POST" })).status).toBe(405);
   });
 });

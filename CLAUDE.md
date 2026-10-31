@@ -18,10 +18,15 @@ npm run deploy         # wrangler deploy
 
 ```
 mcp.tachtien.nl  →  src/worker.js
-  GET|HEAD /    inline HTML info page
-  *        /mcp src/mcp.js (createMcpHandler from agents/mcp/server, stateless)
-  else          404
+  GET|HEAD /                                  inline HTML info page (ETag/304, Link discovery header)
+  *        /mcp                               src/mcp.js (createMcpHandler from agents/mcp/server, stateless, any origin)
+  GET      /.well-known/mcp/server-card.json  serverCard(), built from the same TOOLS as the server
+  GET      /.well-known/security.txt
+  GET      /favicon.ico                       301 to tachtien.nl (icons live on the site)
+  else                                        HTML 404 (405 for non-GET/HEAD)
 ```
+
+tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known/mcp/server-card.json>; rel="mcp"` in its `_headers` and lists the endpoint in its `/llms.txt`.
 
 **Key files:**
 - `src/entry.js` — the dictionary entry as frozen data, `entryMarkdown()`. Only content source.
@@ -42,4 +47,6 @@ mcp.tachtien.nl  →  src/worker.js
 - **`createMcpHandler` takes a factory** (`() => McpServer`). Passing a server instance selects the deprecated SDK v1 path.
 - **Every tool has an `outputSchema`** and returns `structuredContent` plus the same data as JSON text. The SDK validates the result against the schema, so a new field in `entry.js` must be added to the schema too.
 - **Exact numbers are never tachtien**, by design: `tachtienify` leaves digits alone and `is_tachtien` answers false for any finite number.
+- **The info page lists tools by hand** (in Dutch). `test/worker.test.js` fails when a tool from `tools/list` is missing there; the server card needs no edit, it reads `TOOLS`.
+- **The page's ETag is computed at startup** from the HTML; compare it without `W/`, because Cloudflare weakens it when compressing.
 - **Invalid tool input is a tool error** (`isError: true`, "Input validation error ..."), not a JSON-RPC error; the SDK validates before the tool body runs.

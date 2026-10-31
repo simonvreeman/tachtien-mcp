@@ -7,7 +7,7 @@
  * registers closures, so the per-request McpServer the stateless handler
  * needs is cheap.
  */
-import { McpServer } from "@modelcontextprotocol/server";
+import { McpServer, SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/server";
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
 import { createMcpHandler } from "agents/mcp/server";
 import * as z from "zod";
@@ -17,7 +17,11 @@ import pkg from "../package.json";
 
 const SERVER_INFO = { name: "tachtien", version: pkg.version };
 export const MCP_PATH = "/mcp";
+const ENDPOINT = `https://mcp.tachtien.nl${MCP_PATH}`;
 const ENTRY_URI = "tachtien://entry";
+const ENTRY_RESOURCE = { title: "Tachtien (woordenboekartikel)", description: "The whole tachtien.nl entry as Markdown, in Dutch.", mimeType: "text/markdown" };
+// 2026-07-28 is served through server/discover; the handshake revisions through initialize.
+const PROTOCOL_VERSIONS = ["2026-07-28", ...SUPPORTED_PROTOCOL_VERSIONS];
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
 const link = z.object({ title: z.string(), url: z.string() });
@@ -102,13 +106,42 @@ function createServer() {
   server.registerResource(
     "entry",
     ENTRY_URI,
-    { title: "Tachtien (woordenboekartikel)", description: "The whole tachtien.nl entry as Markdown, in Dutch.", mimeType: "text/markdown" },
+    ENTRY_RESOURCE,
     async (uri) => ({ contents: [{ uri: uri.href, mimeType: "text/markdown", text: entryMarkdown() }] }),
   );
   return server;
 }
 
-const handler = createMcpHandler(createServer, { route: MCP_PATH });
+// Public, read-only and without auth or sessions, so any browser origin may call it.
+const handler = createMcpHandler(createServer, { route: MCP_PATH, allowedOriginHostnames: "*" });
+
+/**
+ * The MCP server card for /.well-known/mcp/server-card.json, built from the
+ * same tool and resource definitions the server registers.
+ */
+export function serverCard() {
+  return {
+    name: SERVER_INFO.name,
+    title: "Tachtien",
+    version: SERVER_INFO.version,
+    description: "Read-only MCP server for the Dutch word tachtien (ontelbaar veel): look it up, find examples and mentions, rewrite vague amounts as tachtien, or ask whether something counts as tachtien.",
+    vendor: { name: "Simon Vreeman", url: "https://vreeman.com" },
+    license: { code: "MIT", repo: "https://github.com/simonvreeman/tachtien-mcp" },
+    endpoint: ENDPOINT,
+    transport: "http",
+    protocolVersion: PROTOCOL_VERSIONS[0],
+    supportedProtocolVersions: PROTOCOL_VERSIONS,
+    authentication: "none",
+    capabilities: { tools: true, resources: true, prompts: false },
+    tools: Object.entries(TOOLS).map(([name, { description }]) => ({ name, description })),
+    resources: [{ uri: ENTRY_URI, name: "entry", ...ENTRY_RESOURCE }],
+    links: {
+      site: "https://tachtien.nl/",
+      source: "https://github.com/simonvreeman/tachtien-mcp",
+      landingPage: "https://mcp.tachtien.nl/",
+    },
+  };
+}
 
 /** Serve one MCP request. */
 export function handleMcp(request, env, ctx) {

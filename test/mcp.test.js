@@ -61,6 +61,13 @@ describe("mcp", () => {
       expect(result.structuredContent, name).toEqual(data(result));
     }
   });
+  it("accepts browser requests from any origin", async () => {
+    const req = rpc({ jsonrpc: "2.0", id: 1, method: "tools/list" });
+    req.headers.set("origin", "https://example.com");
+    const res = await handleMcp(req, {}, {});
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+  });
   it("reports invalid input as a tool error", async () => {
     const empty = await call("tachtienify", { text: "" });
     expect(empty.isError).toBe(true);
