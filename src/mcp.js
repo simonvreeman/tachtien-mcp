@@ -121,6 +121,8 @@ const handler = createMcpHandler(createServer, { route: MCP_PATH, allowedOriginH
  */
 export function serverCard() {
   return {
+    // serverInfo is the SEP-1649 shape; the flat name/title/version match older cards.
+    serverInfo: { ...SERVER_INFO, title: "Tachtien" },
     name: SERVER_INFO.name,
     title: "Tachtien",
     version: SERVER_INFO.version,

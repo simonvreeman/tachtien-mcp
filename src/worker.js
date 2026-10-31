@@ -37,6 +37,14 @@ Preferred-Languages: nl, en
 Canonical: ${ORIGIN}/.well-known/security.txt
 `;
 
+// The same signals as tachtien.nl/robots.txt: the server exists to be used by AI.
+const ROBOTS_TXT = `User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+
+Agentmap: https://tachtien.nl/.well-known/ai-catalog.json
+`;
+
 const layout = ({ title, head = "", body }) => `<!doctype html>
 <html lang="nl">
   <head>
@@ -167,6 +175,9 @@ export default {
       return Response.json(serverCard(), {
         headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=3600", "access-control-allow-origin": "*" },
       });
+    }
+    if (path === "/robots.txt") {
+      return new Response(ROBOTS_TXT, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" } });
     }
     if (path === "/.well-known/security.txt") {
       return new Response(SECURITY_TXT, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" } });

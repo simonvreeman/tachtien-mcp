@@ -72,9 +72,17 @@ describe("worker", () => {
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
     const card = await res.json();
     expect(card).toMatchObject({ name: "tachtien", version: pkg.version, endpoint: "https://mcp.tachtien.nl/mcp", transport: "http", authentication: "none" });
+    expect(card.serverInfo).toEqual({ name: "tachtien", title: "Tachtien", version: pkg.version });
     expect(card.supportedProtocolVersions).toContain("2025-06-18");
     expect(card.tools.map((t) => t.name)).toEqual((await listTools()).map((t) => t.name));
     expect(card.resources).toEqual([expect.objectContaining({ uri: "tachtien://entry" })]);
+  });
+  it("serves robots.txt with content signals", async () => {
+    const res = await fetch("/robots.txt");
+    expect(res.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    const body = await res.text();
+    expect(body).toMatch(/User-agent: \*\nContent-Signal: search=yes, ai-input=yes, ai-train=yes\nAllow: \//);
+    expect(body).toContain("Agentmap: https://tachtien.nl/.well-known/ai-catalog.json");
   });
   it("serves security.txt and sends favicon requests to tachtien.nl", async () => {
     const txt = await fetch("/.well-known/security.txt");

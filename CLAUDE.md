@@ -22,11 +22,12 @@ mcp.tachtien.nl  →  src/worker.js
   *        /mcp                               src/mcp.js (createMcpHandler from agents/mcp/server, stateless, any origin)
   GET      /.well-known/mcp/server-card.json  serverCard(), built from the same TOOLS as the server
   GET      /.well-known/security.txt
+  GET      /robots.txt                        Content-Signal: search, ai-input, ai-train all yes; Agentmap to tachtien.nl
   GET      /favicon.ico                       301 to tachtien.nl (icons live on the site)
   else                                        HTML 404 (405 for non-GET/HEAD)
 ```
 
-tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known/mcp/server-card.json>; rel="mcp"` in its `_headers` and lists the endpoint in its `/llms.txt`.
+tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known/mcp/server-card.json>; rel="mcp"` in its `_headers`, redirects its own `/.well-known/mcp/server-card.json` here (`_redirects`), lists the server in `/llms.txt`, `/.well-known/api-catalog` and `/.well-known/ai-catalog.json`, ships an agent skill under `/.well-known/agent-skills/`, and registers the same five tools in the browser with `webmcp.js` (calls are forwarded to `/mcp`).
 
 **Key files:**
 - `src/entry.js` — the dictionary entry as frozen data, `entryMarkdown()`. Only content source.
@@ -44,6 +45,7 @@ tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known
 ## Gotchas
 
 - **Change the site first, then `entry.js`.** After editing tachtien.nl, update `entry.js` and run `npm run check:drift`; tests pin counts (2 examples, 14 mentions: 4 twitter, 4 press, 6 cityguys).
+- **A tool change touches the site too.** Renaming a tool or changing its description means regenerating `webmcp.js` in the tachtien repo from `tools/list`; editing the site's `SKILL.md` means updating its sha256 in `agent-skills/index.json`. `check:drift` catches both (it reads the live server card; pass a local card URL as the second argument before deploying).
 - **`createMcpHandler` takes a factory** (`() => McpServer`). Passing a server instance selects the deprecated SDK v1 path.
 - **Every tool has an `outputSchema`** and returns `structuredContent` plus the same data as JSON text. The SDK validates the result against the schema, so a new field in `entry.js` must be added to the schema too.
 - **Exact numbers are never tachtien**, by design: `tachtienify` leaves digits alone and `is_tachtien` answers false for any finite number.
