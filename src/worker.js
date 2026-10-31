@@ -21,7 +21,12 @@ const PAGE = `<!doctype html>
       body { color: rgba(0, 0, 0, .75); font: italic calc(1rem + .5vw)/1.618 Georgia, serif; padding: 5%; max-width: 40em; }
       h1 { font-style: normal; font-weight: 100; letter-spacing: 2px; }
       a { color: inherit; }
+      h2 { font-size: 1em; font-style: normal; font-weight: 400; letter-spacing: 2px; margin-top: 1.5em; }
       pre { font: .85rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+      code { font: normal .85em ui-monospace, Menlo, monospace; }
+      dt { margin-top: 1em; }
+      dt code { font-size: 1em; font-weight: 600; }
+      dd { margin-left: 0; }
       @media (prefers-color-scheme: dark) { body { background: #404040; color: rgba(255, 255, 255, .9); } }
     </style>
   </head>
@@ -32,6 +37,24 @@ const PAGE = `<!doctype html>
     <pre>${ENDPOINT}</pre>
     <p>Toevoegen aan Claude Code:</p>
     <pre>claude mcp add --transport http tachtien ${ENDPOINT}</pre>
+    <h2>Tools</h2>
+    <dl>
+      <dt><code>define</code></dt>
+      <dd>Zoekt het woord op: lettergrepen, woordsoort, uitspraak (<code>tɑxtin</code>), definitie en herkomst.</dd>
+      <dt><code>examples</code></dt>
+      <dd>Voorbeeldzinnen met tachtien. Met <code>random: true</code> krijg je er één willekeurig.</dd>
+      <dt><code>mentions</code></dt>
+      <dd>Externe vermeldingen met link: tweets, pers en Cityguys. Filter met <code>source</code>: <code>twitter</code>, <code>press</code> of <code>cityguys</code>.</dd>
+      <dt><code>tachtienify</code></dt>
+      <dd>Vervangt vage grote hoeveelheden in een tekst door tachtien, in het Nederlands en Engels. Exacte getallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes&rdquo;.</dd>
+      <dt><code>is_tachtien</code></dt>
+      <dd>Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; is wel tachtien.</dd>
+    </dl>
+    <h2>Resource</h2>
+    <dl>
+      <dt><code>tachtien://entry</code></dt>
+      <dd>Het hele woordenboekartikel als Markdown, in één keer.</dd>
+    </dl>
   </body>
 </html>
 `;

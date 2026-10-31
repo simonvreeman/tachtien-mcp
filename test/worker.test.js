@@ -18,6 +18,14 @@ describe("worker", () => {
     expect(html).toContain('href="https://tachtien.nl/"');
     expect((await fetch("/", { method: "HEAD" })).status).toBe(200);
   });
+  it("describes every tool and the resource on the info page", async () => {
+    const html = await (await fetch("/")).text();
+    const body = await (await fetch("/mcp", toolsList)).text();
+    const { result } = JSON.parse(body.split("\n").find((l) => l.startsWith("data:")).slice(5));
+    expect(result.tools.length).toBeGreaterThan(0);
+    for (const { name } of result.tools) expect(html, name).toContain(`<dt><code>${name}</code>`);
+    expect(html).toContain("tachtien://entry");
+  });
   it("routes /mcp and /mcp/ to the MCP server", async () => {
     for (const path of ["/mcp", "/mcp/"]) {
       const res = await fetch(path, toolsList);
