@@ -13,7 +13,17 @@ vague amounts as tachtien, or ask whether something counts as tachtien.
 claude mcp add --transport http tachtien https://mcp.tachtien.nl/mcp
 ```
 
-Other clients:
+## ChatGPT
+
+In ChatGPT on the web: open **Plugins**, choose **+** and then **Add custom
+MCP server**. Name it, for example, `Tachtien`, enter
+`https://mcp.tachtien.nl/mcp` as the endpoint, choose no authentication and
+finish creating it. Then install the plugin and use `@Tachtien` in a new chat.
+
+Whether you can add your own MCP servers depends on your ChatGPT plan and your
+workspace settings.
+
+## Other compatible MCP clients
 
 ```json
 { "mcpServers": { "tachtien": { "type": "http", "url": "https://mcp.tachtien.nl/mcp" } } }

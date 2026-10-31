@@ -98,6 +98,13 @@ const PAGE = layout({
       <pre>${ENDPOINT}</pre>
       <p>Toevoegen aan Claude Code:</p>
       <pre>claude mcp add --transport http tachtien ${ENDPOINT}</pre>
+      <p>Toevoegen aan ChatGPT (op het web):</p>
+      <ol>
+        <li>Open <strong>Plugins</strong>, kies <strong>+</strong> en daarna <strong>Add custom MCP server</strong>.</li>
+        <li>Geef de server bijvoorbeeld de naam <code>Tachtien</code> en vul als endpoint <code>${ENDPOINT}</code> in.</li>
+        <li>Kies geen authenticatie, maak de plugin aan en installeer hem. Gebruik daarna <code>@Tachtien</code> in een nieuwe chat.</li>
+      </ol>
+      <p>De mogelijkheid om eigen MCP-servers toe te voegen hangt af van je ChatGPT-abonnement en de instellingen van je workspace.</p>
       <h2>Tools</h2>
       <dl>
         <dt><code>define</code></dt>
