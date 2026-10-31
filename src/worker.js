@@ -114,9 +114,19 @@ const PAGE = layout({
         <dt><code>mentions</code></dt>
         <dd>Externe vermeldingen met link: tweets, pers en Cityguys. Filter met <code>source</code>: <code>twitter</code>, <code>press</code> of <code>cityguys</code>.</dd>
         <dt><code>tachtienify</code></dt>
-        <dd>Vervangt vage grote hoeveelheden in een tekst door tachtien, in het Nederlands en Engels. Exacte getallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes&rdquo;.</dd>
+        <dd>Vervangt vage grote hoeveelheden en grote schattingen in een tekst door tachtien, in het Nederlands en Engels, en zegt waar. Exacte getallen en jaartallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes met ongeveer honderd man&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes met tachtien man&rdquo;.</dd>
         <dt><code>is_tachtien</code></dt>
-        <dd>Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; is wel tachtien, &ldquo;niet heel veel&rdquo; niet.</dd>
+        <dd>Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n vijf&rdquo; niet. Een schatting telt vanaf twintig.</dd>
+      </dl>
+      <h2>Prompts</h2>
+      <p>Prompts start je zelf, bijvoorbeeld als slash-commando in je MCP-client.</p>
+      <dl>
+        <dt><code>uitleg</code></dt>
+        <dd>Legt het woord uit met het hele artikel erbij. Met <code>taal: English</code> in het Engels.</dd>
+        <dt><code>herschrijf</code></dt>
+        <dd>Haalt je <code>tekst</code> door tachtienify en vraagt het model de grammatica rond elk tachtien recht te zetten.</dd>
+        <dt><code>zin</code></dt>
+        <dd>Verzint een nieuwe voorbeeldzin in de stijl van tachtien.nl, eventueel over een <code>onderwerp</code>.</dd>
       </dl>
       <h2>Resource</h2>
       <dl>

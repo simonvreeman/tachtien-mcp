@@ -27,12 +27,12 @@ mcp.tachtien.nl  →  src/worker.js
   else                                        HTML 404 (405 for non-GET/HEAD)
 ```
 
-tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known/mcp/server-card.json>; rel="mcp"` in its `_headers`, redirects its own `/.well-known/mcp/server-card.json` here (`_redirects`), lists the server in `/llms.txt`, `/.well-known/api-catalog` and `/.well-known/ai-catalog.json`, ships an agent skill under `/.well-known/agent-skills/`, and registers the same five tools in the browser with `webmcp.js` (calls are forwarded to `/mcp`).
+tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known/mcp/server-card.json>; rel="mcp"` in its `_headers`, redirects its own `/.well-known/mcp/server-card.json` here (`_redirects`), lists the server in `/llms.txt`, `/.well-known/api-catalog` and `/.well-known/ai-catalog.json`, ships an agent skill under `/.well-known/agent-skills/`, and registers the same five tools in the browser with `webmcp.js` (calls are forwarded to `/mcp`). Prompts are not in `webmcp.js`.
 
 **Key files:**
 - `src/entry.js` — the dictionary entry as frozen data, `entryMarkdown()`. Only content source.
-- `src/playful.js` — `tachtienify(text)`, `isTachtien(amount)`; pure, no MCP imports. `VAGUE_AMOUNTS` drives both.
-- `src/mcp.js` — tool schemas and descriptions at module scope; `createServer()` registers five read-only tools and resource `tachtien://entry`.
+- `src/playful.js` — `tachtienify(text)`, `isTachtien(amount)`; pure, no MCP imports. `VAGUE_AMOUNTS`, `APPROX_BEFORE` and `APPROX_MIN` drive both, so whatever `is_tachtien` accepts, `tachtienify` replaces.
+- `src/mcp.js` — tool and prompt schemas at module scope; `createServer()` registers five read-only tools, three prompts (`uitleg`, `herschrijf`, `zin`, with completions) and resource `tachtien://entry`.
 - `scripts/check-drift.mjs` — Node script, not a test, so `npm test` never hits the network.
 
 ## Code style
@@ -48,7 +48,7 @@ tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known
 - **A tool change touches the site too.** Renaming a tool or changing its description means regenerating `webmcp.js` in the tachtien repo from `tools/list`; editing the site's `SKILL.md` means updating its sha256 in `agent-skills/index.json`. `check:drift` catches both (it reads the live server card; pass a local card URL as the second argument before deploying).
 - **`createMcpHandler` takes a factory** (`() => McpServer`). Passing a server instance selects the deprecated SDK v1 path.
 - **Every tool has an `outputSchema`** and returns `structuredContent` plus the same data as JSON text. The SDK validates the result against the schema, so a new field in `entry.js` must be added to the schema too.
-- **Exact numbers are never tachtien**, by design: `tachtienify` leaves digits alone and `is_tachtien` answers false for any finite number.
-- **The info page lists tools by hand** (in Dutch). `test/worker.test.js` fails when a tool from `tools/list` is missing there; the server card needs no edit, it reads `TOOLS`.
+- **Exact numbers are never tachtien**, by design. Estimates are, from `APPROX_MIN` (20) up: "ongeveer honderd", "~200", "100+". A four-digit number from 1000 to 2100 after a marker is a year ("rond 2014"), not an estimate. A plain JSON number is always exact.
+- **The info page lists tools and prompts by hand** (in Dutch). `test/worker.test.js` fails when one is missing there; the server card needs no edit, it reads `TOOLS` and `PROMPTS`.
 - **The page's ETag is computed at startup** from the HTML; compare it without `W/`, because Cloudflare weakens it when compressing.
 - **Invalid tool input is a tool error** (`isError: true`, "Input validation error ..."), not a JSON-RPC error; the SDK validates before the tool body runs.

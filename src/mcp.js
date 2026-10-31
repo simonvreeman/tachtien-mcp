@@ -1,13 +1,14 @@
 /**
  * MCP server at /mcp (Streamable HTTP, stateless). Three lookup tools over
  * the tachtien.nl entry (define, examples, mentions), two playful ones
- * (tachtienify, is_tachtien) and the whole entry as resource tachtien://entry.
+ * (tachtienify, is_tachtien), the whole entry as resource tachtien://entry,
+ * and three prompts (uitleg, herschrijf, zin) that clients show as commands.
  *
  * Schemas and descriptions live at module scope; createServer() only
  * registers closures, so the per-request McpServer the stateless handler
  * needs is cheap.
  */
-import { McpServer, SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/server";
+import { McpServer, SUPPORTED_PROTOCOL_VERSIONS, completable } from "@modelcontextprotocol/server";
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/server/validators/cf-worker";
 import { createMcpHandler } from "agents/mcp/server";
 import * as z from "zod";
@@ -57,20 +58,58 @@ const TOOLS = {
     outputSchema: z.object({ mentions: z.array(mention) }),
   },
   tachtienify: {
-    description: "Rewrite a text so that vague large amounts in Dutch or English ('heel veel', 'honderden', 'a lot of', 'countless', ...) become 'tachtien'. Exact numbers are left alone, because they were counted. Returns the new text and the number of replacements.",
+    description: "Rewrite a text so that vague large amounts in Dutch or English ('heel veel', 'honderden', 'a lot of', 'countless', ...) and large estimates ('ongeveer honderd', '~200', '100+') become 'tachtien'. Exact numbers, small estimates and years are left alone. Returns the new text, the number of replacements and each replaced phrase with its index in the input.",
     inputSchema: z.object({
       text: z.string().min(1).max(5000).describe("The text to rewrite"),
     }),
-    outputSchema: z.object({ text: z.string(), replacements: z.number().int() }),
+    outputSchema: z.object({
+      text: z.string(),
+      replacements: z.number().int(),
+      replaced: z.array(z.object({ text: z.string(), index: z.number().int() })),
+    }),
   },
   is_tachtien: {
-    description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig, also inside a phrase like '18 biertjes'); vague amounts like 'heel veel' or 'geen idee' do, unless negated ('niet heel veel').",
+    description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig, also inside a phrase like '18 biertjes'). Vague amounts like 'heel veel' or 'geen idee' do, and so do estimates of 20 or more ('ongeveer honderd', 'zo'n 30', '100+'), because nobody counted; negation ('niet heel veel') makes either false.",
     inputSchema: z.object({
       amount: z.union([z.number(), z.string().min(1).max(200)]).describe("A number, or an amount in words"),
     }),
     outputSchema: z.object({ isTachtien: z.boolean(), reason: z.string() }),
   },
 };
+
+// Prompt arguments are strings; completable() feeds completion/complete.
+const startsWith = (options) => (value = "") =>
+  options.filter((o) => o.toLowerCase().startsWith(value.toLowerCase()));
+const LANGUAGES = ["Nederlands", "English"];
+const TOPICS = ["kopstootjes", "Bloody Mary's", "cervezas", "mails", "vergaderingen", "katers", "verjaardagen", "bao buns"];
+
+const PROMPTS = {
+  uitleg: {
+    title: "Leg tachtien uit",
+    description: "Explain the Dutch word tachtien (meaning, pronunciation, origin, an example) from the tachtien.nl entry.",
+    argsSchema: z.object({
+      taal: completable(z.string().describe("Language of the explanation: Nederlands or English"), startsWith(LANGUAGES)).optional(),
+    }),
+  },
+  herschrijf: {
+    title: "Herschrijf met tachtien",
+    description: "Rewrite a text with tachtien: the server replaces vague large amounts and estimates, then asks the model to fix the grammar around each replacement.",
+    argsSchema: z.object({ tekst: z.string().min(1).max(5000).describe("The text to rewrite") }),
+  },
+  zin: {
+    title: "Verzin een zin met tachtien",
+    description: "Write a new Dutch example sentence with tachtien, in the style of the examples on tachtien.nl.",
+    argsSchema: z.object({
+      onderwerp: completable(z.string().max(200).describe("What the sentence is about, for example kopstootjes"), startsWith(TOPICS)).optional(),
+    }),
+  },
+};
+
+const userText = (text) => ({ role: "user", content: { type: "text", text } });
+const entryResource = () => ({
+  role: "user",
+  content: { type: "resource", resource: { uri: ENTRY_URI, mimeType: "text/markdown", text: entryMarkdown() } },
+});
 
 // The text block keeps clients without structured output support working.
 const text = (data) => ({ content: [{ type: "text", text: JSON.stringify(data, null, 2) }], structuredContent: data });
@@ -103,6 +142,31 @@ function createServer() {
   register("tachtienify", ({ text }) => tachtienify(text));
   register("is_tachtien", ({ amount }) => isTachtien(amount));
 
+  server.registerPrompt("uitleg", PROMPTS.uitleg, ({ taal }) => ({
+    messages: [
+      entryResource(),
+      userText(/^en/i.test(taal ?? "")
+        ? "Explain the Dutch word tachtien to me in English, using only the entry above: what it means, how to pronounce it, where it comes from, and one of its examples with a translation. Keep it short."
+        : "Leg me het woord tachtien uit met alleen het artikel hierboven: wat het betekent, hoe je het uitspreekt, waar het vandaan komt, en één van de voorbeelden. Houd het kort."),
+    ],
+  }));
+  server.registerPrompt("herschrijf", PROMPTS.herschrijf, ({ tekst }) => {
+    const result = tachtienify(tekst);
+    const found = result.replaced.map((r) => `- "${r.text}"`).join("\n");
+    return {
+      messages: [userText(result.replacements
+        ? `Ik heb deze tekst door tachtienify gehaald. Vervangen:\n${found}\n\nOrigineel:\n${tekst}\n\nResultaat:\n${result.text}\n\nGeef het resultaat terug met kloppende grammatica rond elk "tachtien" (lidwoorden, enkelvoud of meervoud). Verander verder niets, en laat exacte getallen staan.`
+        : `Ik heb deze tekst door tachtienify gehaald, maar er stond geen vage grote hoeveelheid of grote schatting in:\n\n${tekst}\n\nWijs aan waar tachtien zou passen, en leg uit dat exacte getallen niet tachtien zijn, omdat ze geteld zijn.`)],
+    };
+  });
+  server.registerPrompt("zin", PROMPTS.zin, ({ onderwerp }) => ({
+    messages: [userText([
+      "Tachtien betekent ontelbaar veel. Dit zijn de voorbeelden van tachtien.nl:",
+      ...entry.examples.map((ex) => ex.lines.map((l) => `> ${l}`).join("\n")),
+      `Verzin één nieuwe, korte Nederlandse zin of dialoog met tachtien${onderwerp ? ` over ${onderwerp}` : ""}, in dezelfde stijl. Gebruik tachtien als telwoord voor iets wat je niet meer kunt tellen, nooit als exact getal.`,
+    ].join("\n\n"))],
+  }));
+
   server.registerResource(
     "entry",
     ENTRY_URI,
@@ -126,7 +190,7 @@ export function serverCard() {
     name: SERVER_INFO.name,
     title: "Tachtien",
     version: SERVER_INFO.version,
-    description: "Read-only MCP server for the Dutch word tachtien (ontelbaar veel): look it up, find examples and mentions, rewrite vague amounts as tachtien, or ask whether something counts as tachtien.",
+    description: "Read-only MCP server for the Dutch word tachtien (ontelbaar veel): look it up, find examples and mentions, rewrite vague amounts and estimates as tachtien, or ask whether something counts as tachtien. Prompts explain the word, rewrite a text and write a new example.",
     vendor: { name: "Simon Vreeman", url: "https://vreeman.com" },
     license: { code: "MIT", repo: "https://github.com/simonvreeman/tachtien-mcp" },
     endpoint: ENDPOINT,
@@ -134,8 +198,9 @@ export function serverCard() {
     protocolVersion: PROTOCOL_VERSIONS[0],
     supportedProtocolVersions: PROTOCOL_VERSIONS,
     authentication: "none",
-    capabilities: { tools: true, resources: true, prompts: false },
+    capabilities: { tools: true, resources: true, prompts: true, completions: true },
     tools: Object.entries(TOOLS).map(([name, { description }]) => ({ name, description })),
+    prompts: Object.entries(PROMPTS).map(([name, { title, description }]) => ({ name, title, description })),
     resources: [{ uri: ENTRY_URI, name: "entry", ...ENTRY_RESOURCE }],
     links: {
       site: "https://tachtien.nl/",

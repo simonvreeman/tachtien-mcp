@@ -47,11 +47,16 @@ describe("mcp", () => {
     expect(press.every((m) => m.source === "press")).toBe(true);
   });
   it("tachtienifies text", async () => {
-    expect(data(await call("tachtienify", { text: "heel veel bier" }))).toEqual({ text: "tachtien bier", replacements: 1 });
+    expect(data(await call("tachtienify", { text: "heel veel bier, ongeveer 30" }))).toEqual({
+      text: "tachtien bier, tachtien",
+      replacements: 2,
+      replaced: [{ text: "heel veel", index: 0 }, { text: "ongeveer 30", index: 16 }],
+    });
   });
   it("judges amounts given as number or text", async () => {
     expect(data(await call("is_tachtien", { amount: 18 })).isTachtien).toBe(false);
     expect(data(await call("is_tachtien", { amount: "ontelbaar veel" })).isTachtien).toBe(true);
+    expect(data(await call("is_tachtien", { amount: "ongeveer honderd" })).isTachtien).toBe(true);
   });
   it("returns structuredContent equal to the text result for every tool", async () => {
     const calls = [["define"], ["examples", { random: true }], ["mentions"], ["tachtienify", { text: "heel veel" }], ["is_tachtien", { amount: 3 }]];
@@ -80,5 +85,36 @@ describe("mcp", () => {
     const { result } = await send("resources/read", { uri: "tachtien://entry" });
     expect(result.contents[0]).toMatchObject({ uri: "tachtien://entry", mimeType: "text/markdown" });
     expect(result.contents[0].text).toMatch(/^# tach·tien/);
+  });
+  it("lists the three prompts", async () => {
+    const { result } = await send("prompts/list");
+    expect(result.prompts.map((p) => p.name).sort()).toEqual(["herschrijf", "uitleg", "zin"]);
+    const herschrijf = result.prompts.find((p) => p.name === "herschrijf");
+    expect(herschrijf.arguments).toEqual([expect.objectContaining({ name: "tekst", required: true })]);
+  });
+  it("explains the word with the entry embedded, in Dutch or English", async () => {
+    const { result } = await send("prompts/get", { name: "uitleg", arguments: {} });
+    expect(result.messages[0].content).toMatchObject({ type: "resource", resource: { uri: "tachtien://entry" } });
+    expect(result.messages[1].content.text).toMatch(/^Leg me/);
+    const en = (await send("prompts/get", { name: "uitleg", arguments: { taal: "English" } })).result;
+    expect(en.messages[1].content.text).toMatch(/^Explain/);
+  });
+  it("rewrites with the tachtienify result in the prompt", async () => {
+    const { result } = await send("prompts/get", { name: "herschrijf", arguments: { tekst: "Ik las ongeveer honderd mails" } });
+    expect(result.messages[0].content.text).toContain("Ik las tachtien mails");
+    expect(result.messages[0].content.text).toContain('"ongeveer honderd"');
+    const none = (await send("prompts/get", { name: "herschrijf", arguments: { tekst: "18 mails" } })).result;
+    expect(none.messages[0].content.text).toContain("geen vage");
+  });
+  it("asks for a sentence in the style of the examples", async () => {
+    const { result } = await send("prompts/get", { name: "zin", arguments: { onderwerp: "mails" } });
+    expect(result.messages[0].content.text).toContain("Tachtien Bloody Mary's graag!");
+    expect(result.messages[0].content.text).toContain("over mails");
+  });
+  it("completes prompt arguments", async () => {
+    const complete = async (name, argument, value) =>
+      (await send("completion/complete", { ref: { type: "ref/prompt", name }, argument: { name: argument, value } })).result.completion.values;
+    expect(await complete("uitleg", "taal", "e")).toEqual(["English"]);
+    expect(await complete("zin", "onderwerp", "K")).toEqual(["kopstootjes", "katers"]);
   });
 });
