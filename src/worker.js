@@ -7,6 +7,16 @@ import { handleMcp, MCP_PATH } from "./mcp.js";
 
 const ENDPOINT = `https://mcp.tachtien.nl${MCP_PATH}`;
 const PAGE_METHODS = new Set(["GET", "HEAD"]);
+// no-cache: the page is tiny, and a deploy must show the new tool list at once.
+// The page has no scripts, images or forms; the headers match tachtien.nl's _headers.
+const PAGE_HEADERS = {
+  "content-type": "text/html; charset=utf-8",
+  "cache-control": "no-cache",
+  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+  "referrer-policy": "strict-origin-when-cross-origin",
+};
 
 const PAGE = `<!doctype html>
 <html lang="nl">
@@ -74,9 +84,7 @@ export default {
       if (!PAGE_METHODS.has(request.method)) {
         return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
       }
-      return new Response(request.method === "HEAD" ? null : PAGE, {
-        headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" },
-      });
+      return new Response(request.method === "HEAD" ? null : PAGE, { headers: PAGE_HEADERS });
     }
     return new Response("Not found", { status: 404 });
   },

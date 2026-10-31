@@ -13,44 +13,63 @@ import { createMcpHandler } from "agents/mcp/server";
 import * as z from "zod";
 import { entry, entryMarkdown, MENTION_SOURCES } from "./entry.js";
 import { tachtienify, isTachtien } from "./playful.js";
+import pkg from "../package.json";
 
-const SERVER_INFO = { name: "tachtien", version: "0.1.0" }; // keep in step with package.json
+const SERVER_INFO = { name: "tachtien", version: pkg.version };
 export const MCP_PATH = "/mcp";
 const ENTRY_URI = "tachtien://entry";
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
+
+const link = z.object({ title: z.string(), url: z.string() });
+const example = z.object({ lines: z.array(z.string()) });
+const mention = z.object({ title: z.string(), source: z.enum(MENTION_SOURCES), url: z.string().nullable() });
 
 const TOOLS = {
   define: {
     description: "Define the Dutch word 'tachtien' (a cardinal number meaning 'ontelbaar veel', uncountably many): syllables, part of speech, IPA pronunciation, definition and origin, as on tachtien.nl. Content is in Dutch.",
     inputSchema: z.object({}),
+    outputSchema: z.object({
+      word: z.string(),
+      syllables: z.string(),
+      partOfSpeech: z.string(),
+      pronunciation: z.object({ ipa: z.string() }),
+      definition: z.string(),
+      origin: z.object({ text: z.string(), year: z.number().int(), links: z.array(link) }),
+      url: z.string(),
+    }),
   },
   examples: {
     description: "Example sentences that use 'tachtien', in Dutch. Each example is a short dialogue of one or more lines.",
     inputSchema: z.object({
       random: z.boolean().optional().describe("Return one example at random instead of all"),
     }),
+    outputSchema: z.object({ examples: z.array(example) }),
   },
   mentions: {
     description: "External mentions of 'tachtien' (tweets, press and Cityguys articles) with title, source and URL. The url is null for a mention without a link.",
     inputSchema: z.object({
       source: z.enum(MENTION_SOURCES).optional().describe("Only mentions from this source"),
     }),
+    outputSchema: z.object({ mentions: z.array(mention) }),
   },
   tachtienify: {
     description: "Rewrite a text so that vague large amounts in Dutch or English ('heel veel', 'honderden', 'a lot of', 'countless', ...) become 'tachtien'. Exact numbers are left alone, because they were counted. Returns the new text and the number of replacements.",
     inputSchema: z.object({
       text: z.string().min(1).max(5000).describe("The text to rewrite"),
     }),
+    outputSchema: z.object({ text: z.string(), replacements: z.number().int() }),
   },
   is_tachtien: {
-    description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig); vague amounts like 'heel veel' or 'geen idee' do.",
+    description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig, also inside a phrase like '18 biertjes'); vague amounts like 'heel veel' or 'geen idee' do, unless negated ('niet heel veel').",
     inputSchema: z.object({
       amount: z.union([z.number(), z.string().min(1).max(200)]).describe("A number, or an amount in words"),
     }),
+    outputSchema: z.object({ isTachtien: z.boolean(), reason: z.string() }),
   },
 };
 
-const text = (data) => ({ content: [{ type: "text", text: JSON.stringify(data, null, 2) }] });
+// The text block keeps clients without structured output support working.
+const text = (data) => ({ content: [{ type: "text", text: JSON.stringify(data, null, 2) }], structuredContent: data });
 const toolError = (message) => ({ content: [{ type: "text", text: message }], isError: true });
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 

@@ -18,6 +18,14 @@ describe("worker", () => {
     expect(html).toContain('href="https://tachtien.nl/"');
     expect((await fetch("/", { method: "HEAD" })).status).toBe(200);
   });
+  it("sends revalidation and security headers with the info page", async () => {
+    const { headers } = await fetch("/");
+    expect(headers.get("cache-control")).toBe("no-cache");
+    expect(headers.get("content-security-policy")).toContain("default-src 'none'");
+    expect(headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+    expect(headers.get("x-content-type-options")).toBe("nosniff");
+    expect(headers.get("x-frame-options")).toBe("DENY");
+  });
   it("describes every tool and the resource on the info page", async () => {
     const html = await (await fetch("/")).text();
     const body = await (await fetch("/mcp", toolsList)).text();

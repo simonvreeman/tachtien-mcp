@@ -28,10 +28,23 @@ const phraseRegex = (phrases, flags) => {
   return new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternatives.join("|")})(?![\\p{L}\\p{N}])`, flags);
 };
 
+// Number words, without "een"/"one": those are usually an article ("een hoop").
+const NUMBER_WORDS = new Map([
+  ...["twee", "drie", "vier", "vijf", "zes", "zeven", "acht", "negen", "tien", "elf", "twaalf", "dertien", "veertien",
+    "vijftien", "zestien", "zeventien", "achttien", "negentien", "twintig"].map((w, i) => [w, i + 2]),
+  ...["dertig", "veertig", "vijftig", "zestig", "zeventig", "tachtig", "negentig"].map((w, i) => [w, (i + 3) * 10]),
+  ...["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+    "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"].map((w, i) => [w, i + 2]),
+  ...["thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"].map((w, i) => [w, (i + 3) * 10]),
+  ["honderd", 100], ["duizend", 1e3], ["miljoen", 1e6], ["miljard", 1e9],
+  ["hundred", 100], ["thousand", 1e3], ["million", 1e6], ["billion", 1e9],
+]);
+
 const REPLACE_RE = phraseRegex(VAGUE_AMOUNTS, "giu");
 const VAGUE_RE = phraseRegex([...VAGUE_AMOUNTS, ...ALSO_TACHTIEN], "iu");
-const NUMBER_RE = /^[-+]?\d+(?:[.,]\d+)?$/;
-const NUMBER_WORDS = new Map([["achttien", 18], ["tachtig", 80]]);
+const NEGATION_RE = phraseRegex(["niet", "geen", "nee", "nooit", "allesbehalve", "not", "no", "never"], "iu");
+const NUMBER_WORD_RE = phraseRegex([...NUMBER_WORDS.keys()], "iu");
+const DIGITS_RE = /(?<![\p{L}\p{N}.,])[-+]?\d+(?:[.,]\d+)?(?![\p{L}\p{N}])/u;
 
 /**
  * Replace vague large amounts in `text` with "tachtien" ("Tachtien" when the
@@ -43,6 +56,7 @@ export function tachtienify(text) {
   let replacements = 0;
   const out = text.replace(REPLACE_RE, (match) => {
     replacements++;
+    if (match === match.toUpperCase() && match.length > 1) return "TACHTIEN";
     return match[0] === match[0].toUpperCase() ? "Tachtien" : "tachtien";
   });
   return { text: out, replacements };
@@ -63,17 +77,30 @@ const counted = (shown, n) => {
  */
 export function isTachtien(amount) {
   const s = String(amount).trim();
-  const n = typeof amount === "number" ? amount
-    : NUMBER_RE.test(s) ? Number(s.replace(",", "."))
-    : /^[-+]?infinity$/i.test(s) ? Number(s)
-    : NUMBER_WORDS.get(s.toLowerCase());
-
-  if (n === Infinity) return { isTachtien: true, reason: "Ja. Oneindig is het enige exacte getal dat ook ontelbaar is." };
-  if (Number.isFinite(n) || n === -Infinity) {
-    const shown = typeof amount === "number" ? String(amount).replace(".", ",") : s;
-    return { isTachtien: false, reason: counted(shown, n) };
+  if (amount === Infinity || /^\+?infinity$/i.test(s)) {
+    return { isTachtien: true, reason: "Ja. Oneindig is het enige exacte getal dat ook ontelbaar is." };
+  }
+  if (typeof amount === "number") {
+    return Number.isNaN(amount) ? NOT_TACHTIEN : { isTachtien: false, reason: counted(String(amount).replace(".", ","), amount) };
   }
   const vague = s.match(VAGUE_RE);
-  if (vague) return { isTachtien: true, reason: `Ja, "${vague[0]}" is ontelbaar veel, en dat is precies tachtien.` };
-  return { isTachtien: false, reason: "Nee, dat klinkt als iets wat je nog gewoon kunt tellen." };
+  if (vague) {
+    // Only a negation in front counts: "geen idee" and "weet ik niet" carry their own.
+    if (NEGATION_RE.test(s.slice(0, vague.index))) {
+      return { isTachtien: false, reason: `Nee, je zegt zelf al dat het niet "${vague[0]}" is.` };
+    }
+    return { isTachtien: true, reason: `Ja, "${vague[0]}" is ontelbaar veel, en dat is precies tachtien.` };
+  }
+  const n = /^-infinity$/i.test(s) ? -Infinity : findNumber(s);
+  return n === undefined ? NOT_TACHTIEN : { isTachtien: false, reason: counted(s, n) };
+}
+
+const NOT_TACHTIEN = Object.freeze({ isTachtien: false, reason: "Nee, dat klinkt als iets wat je nog gewoon kunt tellen." });
+
+/** The first number in `s`, in digits ("3,5") or as a word ("honderd"), or undefined. */
+function findNumber(s) {
+  const digits = s.match(DIGITS_RE);
+  if (digits) return Number(digits[0].replace(",", "."));
+  const word = s.match(NUMBER_WORD_RE);
+  return word ? NUMBER_WORDS.get(word[0].toLowerCase()) : undefined;
 }

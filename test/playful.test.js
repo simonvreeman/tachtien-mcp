@@ -19,6 +19,10 @@ describe("tachtienify", () => {
     expect(tachtienify("tigmaal en notig")).toEqual({ text: "tigmaal en notig", replacements: 0 });
     expect(tachtienify("tig keer").text).toBe("tachtien keer");
   });
+  it("keeps all caps and does not capitalise mid-sentence", () => {
+    expect(tachtienify("Ik drink HEEL VEEL bier").text).toBe("Ik drink TACHTIEN bier");
+    expect(tachtienify("A lot of beers").text).toBe("Tachtien beers");
+  });
   it("leaves exact numbers alone", () => {
     expect(tachtienify("80 biertjes en 18 shotjes")).toEqual({ text: "80 biertjes en 18 shotjes", replacements: 0 });
   });
@@ -44,6 +48,21 @@ describe("isTachtien", () => {
     for (const a of [Infinity, "Infinity", "∞", "heel veel", "Heel veel biertjes!", "Tachtien", "geen idee", "te veel om te tellen", "a lot"]) {
       expect(isTachtien(a), String(a)).toMatchObject({ isTachtien: true });
     }
+  });
+  it("finds a number inside a phrase, in digits or words", () => {
+    expect(isTachtien("18 biertjes").reason).toContain("achttien");
+    expect(isTachtien("tachtig man").reason).toContain("tachtig");
+    for (const a of ["honderd", "een miljoen", "two thousand", "ongeveer 3,5 liter"]) {
+      expect(isTachtien(a), a).toEqual({ isTachtien: false, reason: expect.stringContaining("geteld") });
+    }
+  });
+  it("respects negation before a vague amount", () => {
+    for (const a of ["niet heel veel", "not a lot", "nee, zeker geen tachtien", "nooit talloze"]) {
+      expect(isTachtien(a), a).toEqual({ isTachtien: false, reason: expect.stringContaining("zelf") });
+    }
+    // The negation is part of these phrases, not in front of them.
+    expect(isTachtien("geen idee").isTachtien).toBe(true);
+    expect(isTachtien("weet ik niet").isTachtien).toBe(true);
   });
   it("rejects anything else", () => {
     expect(isTachtien("een paar")).toEqual({ isTachtien: false, reason: expect.any(String) });

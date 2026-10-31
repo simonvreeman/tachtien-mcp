@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { handleMcp } from "../src/mcp.js";
+import pkg from "../package.json";
 
 const rpc = (body) => new Request("https://mcp.tachtien.nl/mcp", {
   method: "POST",
@@ -19,10 +20,13 @@ describe("mcp", () => {
   it("initializes and lists the five tools", async () => {
     const init = await handleMcp(rpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } } }), {}, {});
     expect(init.status).toBe(200);
-    expect((await parse(init)).result.serverInfo.name).toBe("tachtien");
+    expect((await parse(init)).result.serverInfo).toEqual({ name: "tachtien", version: pkg.version });
     const { result } = await send("tools/list");
     expect(result.tools.map((t) => t.name).sort()).toEqual(["define", "examples", "is_tachtien", "mentions", "tachtienify"]);
-    for (const t of result.tools) expect(t.annotations?.readOnlyHint, t.name).toBe(true);
+    for (const t of result.tools) {
+      expect(t.annotations?.readOnlyHint, t.name).toBe(true);
+      expect(t.outputSchema?.type, t.name).toBe("object");
+    }
     const mentions = result.tools.find((t) => t.name === "mentions");
     expect(mentions.inputSchema.properties.source.enum).toEqual(["twitter", "press", "cityguys"]);
   });
@@ -48,6 +52,14 @@ describe("mcp", () => {
   it("judges amounts given as number or text", async () => {
     expect(data(await call("is_tachtien", { amount: 18 })).isTachtien).toBe(false);
     expect(data(await call("is_tachtien", { amount: "ontelbaar veel" })).isTachtien).toBe(true);
+  });
+  it("returns structuredContent equal to the text result for every tool", async () => {
+    const calls = [["define"], ["examples", { random: true }], ["mentions"], ["tachtienify", { text: "heel veel" }], ["is_tachtien", { amount: 3 }]];
+    for (const [name, args] of calls) {
+      const result = await call(name, args);
+      expect(result.isError, name).toBeFalsy();
+      expect(result.structuredContent, name).toEqual(data(result));
+    }
   });
   it("reports invalid input as a tool error", async () => {
     const empty = await call("tachtienify", { text: "" });

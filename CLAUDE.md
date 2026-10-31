@@ -40,6 +40,6 @@ mcp.tachtien.nl  →  src/worker.js
 
 - **Change the site first, then `entry.js`.** After editing tachtien.nl, update `entry.js` and run `npm run check:drift`; tests pin counts (2 examples, 14 mentions: 4 twitter, 4 press, 6 cityguys).
 - **`createMcpHandler` takes a factory** (`() => McpServer`). Passing a server instance selects the deprecated SDK v1 path.
-- **`SERVER_INFO.version` in `src/mcp.js`** must match `package.json`.
+- **Every tool has an `outputSchema`** and returns `structuredContent` plus the same data as JSON text. The SDK validates the result against the schema, so a new field in `entry.js` must be added to the schema too.
 - **Exact numbers are never tachtien**, by design: `tachtienify` leaves digits alone and `is_tachtien` answers false for any finite number.
 - **Invalid tool input is a tool error** (`isError: true`, "Input validation error ..."), not a JSON-RPC error; the SDK validates before the tool body runs.
