@@ -23,6 +23,7 @@ describe("worker", () => {
     expect(html).toContain('href="https://tachtien.nl/"');
     expect(html).toMatch(/<main>[\s\S]*<h1>[\s\S]*<\/main>/);
     expect(html).toContain('<link rel="canonical" href="https://mcp.tachtien.nl/">');
+    expect(html).not.toContain("noindex");
     expect(html).toContain('<meta property="og:title"');
     expect(html).toContain('<link rel="icon" href="https://tachtien.nl/favicon.svg"');
     expect(html).toContain('href="https://tachtien.nl/privacy"');

@@ -71,7 +71,6 @@ const DESCRIPTION = "MCP-server voor het woord tachtien: ontelbaar veel.";
 const PAGE = layout({
   title: "Tachtien MCP",
   head: `    <meta name="description" content="${DESCRIPTION}">
-    <meta name="robots" content="noindex">
     <link rel="canonical" href="${ORIGIN}/">
     <meta property="og:type" content="website">
     <meta property="og:url" content="${ORIGIN}/">
