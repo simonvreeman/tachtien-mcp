@@ -58,16 +58,25 @@ const layout = ({ title, head = "", body }) => `<!doctype html>
     <link rel="apple-touch-icon" href="https://tachtien.nl/apple-touch-icon.png">
 ${head}    <style>
       body { color: rgba(0, 0, 0, .75); background: #fff; font: italic calc(1rem + .5vw)/1.618 Georgia, serif; padding: 5%; max-width: 40em; }
-      h1 { font-style: normal; font-weight: 100; letter-spacing: 2px; }
       a { color: inherit; }
-      h2 { font-size: 1em; font-style: normal; font-weight: 400; letter-spacing: 2px; margin-top: 1.5em; }
-      pre { font: .85rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+      h1 { font-size: 2.5em; font-style: normal; font-weight: 100; letter-spacing: 2px; line-height: 1.2; margin: 0 0 .5em; }
+      h2, h3 { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-style: normal; line-height: 1.3; }
+      h2 { font-size: 1.35em; font-weight: 600; letter-spacing: 1px; margin: 2em 0 .5em; }
+      h3 { font-size: .9em; font-weight: 600; letter-spacing: .5px; margin: 1.75em 0 .4em; }
+      .lead { font-size: 1.15em; }
+      .note { font-size: .85em; color: rgba(0, 0, 0, .6); }
+      pre { font: normal .8em/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; padding: .75em 1em; background: rgba(0, 0, 0, .05); border-radius: 4px; }
       code { font: normal .85em ui-monospace, Menlo, monospace; }
-      dt { margin-top: 1em; }
-      dt code { font-size: 1em; font-weight: 600; }
+      dt { margin-top: 1.25em; }
+      dt code { font-size: .95em; font-weight: 600; }
       dd { margin-left: 0; }
-      footer { margin-top: 3em; font-size: 1rem; }
-      @media (prefers-color-scheme: dark) { body { background: #404040; color: rgba(255, 255, 255, .9); } }
+      footer { margin-top: 4em; padding-top: 1em; border-top: 1px solid rgba(0, 0, 0, .15); font-size: .8em; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #404040; color: rgba(255, 255, 255, .9); }
+        .note { color: rgba(255, 255, 255, .7); }
+        pre { background: rgba(255, 255, 255, .08); }
+        footer { border-color: rgba(255, 255, 255, .2); }
+      }
     </style>
   </head>
   <body>
@@ -93,18 +102,20 @@ const PAGE = layout({
 `,
   body: `    <main>
       <h1>tach&middot;tien MCP</h1>
-      <p>Een MCP-server voor het woord <a href="https://tachtien.nl/">tachtien</a>: ontelbaar veel. Met tools om het woord op te zoeken, voorbeelden en vermeldingen te vinden, teksten te tachtienificeren en te bepalen of iets tachtien is.</p>
-      <p>Endpoint (Streamable HTTP, zonder login):</p>
+      <p class="lead">Een MCP-server voor het woord <a href="https://tachtien.nl/">tachtien</a>: ontelbaar veel. Met tools om het woord op te zoeken, voorbeelden en vermeldingen te vinden, teksten te tachtienificeren en te bepalen of iets tachtien is.</p>
+      <h2>Verbinden</h2>
+      <h3>Endpoint</h3>
       <pre>${ENDPOINT}</pre>
-      <p>Toevoegen aan Claude Code:</p>
+      <p class="note">Streamable HTTP, zonder login.</p>
+      <h3>Claude Code</h3>
       <pre>claude mcp add --transport http tachtien ${ENDPOINT}</pre>
-      <p>Toevoegen aan ChatGPT (op het web):</p>
+      <h3>ChatGPT (op het web)</h3>
       <ol>
         <li>Open <strong>Plugins</strong>, kies <strong>+</strong> en daarna <strong>Add custom MCP server</strong>.</li>
         <li>Geef de server bijvoorbeeld de naam <code>Tachtien</code> en vul als endpoint <code>${ENDPOINT}</code> in.</li>
         <li>Kies geen authenticatie, maak de plugin aan en installeer hem. Gebruik daarna <code>@Tachtien</code> in een nieuwe chat.</li>
       </ol>
-      <p>De mogelijkheid om eigen MCP-servers toe te voegen hangt af van je ChatGPT-abonnement en de instellingen van je workspace.</p>
+      <p class="note">De mogelijkheid om eigen MCP-servers toe te voegen hangt af van je ChatGPT-abonnement en de instellingen van je workspace.</p>
       <h2>Tools</h2>
       <dl>
         <dt><code>define</code></dt>
