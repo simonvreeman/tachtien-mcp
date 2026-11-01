@@ -73,6 +73,8 @@ const NEGATION_RE = phraseRegex(["niet", "geen", "nee", "nooit", "allesbehalve",
 const APPROX_BEFORE_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation(APPROX_BEFORE)})(?:\\s+(?:een|één|a|an))?\\s*$`, "iu");
 // Markers that also go with a date: "rond 2014" is a year, "ruim 2000" an amount.
 const DATE_MARKER_RE = /^(?:rond|circa|ca\.|around)$/i;
+// A count word after the number beats a date marker: "rond 1500 man" is an amount.
+const COUNT_WORD_RE = /^\s+(?:man|mannen|vrouwen|kinderen|mensen|personen|gasten|bezoekers|deelnemers|stuks|keer|euro|kilo|people|persons|guests|visitors|fans|times|dollars?)(?![\p{L}\p{N}])/iu;
 const APPROX_AFTER_RE = /^(?:\+(?!\s*\d)|-?ish|-odd|\s+(?:of zo|or so|en nog wat|of meer|or more|odd))(?![\p{L}\p{N}])/iu;
 // A token start: a digit (or sign) not inside a number, or the first letter of a word.
 const START_RE = /(?<![\p{L}\p{N}.,])(?=[-+]?\d)|(?<![\p{L}\p{N}])(?=\p{L})/gu;
@@ -168,7 +170,7 @@ function findAmounts(s) {
     let start = m.index, end = num.end;
     const before = s.slice(Math.max(0, start - 40), start).match(APPROX_BEFORE_RE);
     const after = s.slice(end).match(APPROX_AFTER_RE);
-    const year = num.year && !after && Boolean(before?.[0].trim().match(DATE_MARKER_RE));
+    const year = num.year && !after && DATE_MARKER_RE.test(before?.[0].trim() ?? "") && !COUNT_WORD_RE.test(s.slice(end));
     const approx = Boolean(before || after) && !year;
     if (approx && before) start -= before[0].length;
     if (approx && after) end += after[0].length;
