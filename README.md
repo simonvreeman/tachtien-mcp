@@ -36,8 +36,23 @@ workspace settings.
 | `define` | none | syllables, part of speech, IPA, definition, origin |
 | `examples` | `random?: boolean` | example dialogues, or one at random |
 | `mentions` | `source?: "twitter" \| "press" \| "cityguys"` | external mentions with title, source and URL |
-| `tachtienify` | `text: string` | text with vague large amounts replaced by *tachtien*, and the count |
+| `tachtienify` | `text: string` | text with vague large amounts and estimates of 50 or more replaced by *tachtien*, the count, and each replaced phrase with its index |
 | `is_tachtien` | `amount: number \| string` | `{ isTachtien, reason }` |
+
+Estimates ("ongeveer honderd", "zo'n 60", "~200", "100+") and lower bounds
+("meer dan 50", "ruim honderd") are tachtien from 50 up, because nobody
+counted them. Exact numbers, smaller estimates and
+years ("rond 2014") are not.
+
+## Prompts
+
+| Prompt | Arguments | What it does |
+| --- | --- | --- |
+| `uitleg` | `taal?: "Nederlands" \| "English"` | explains the word, with the entry embedded |
+| `herschrijf` | `tekst: string` | runs `tachtienify` on the server, then asks the model to fix the grammar |
+| `zin` | `onderwerp?: string` | asks for a new example sentence in the style of the site |
+
+`taal` and `onderwerp` support `completion/complete`.
 
 Resource `tachtien://entry` is the whole entry as Markdown. Content is Dutch,
 as on the site; tool descriptions are English.

@@ -51,11 +51,13 @@ describe("worker", () => {
     expect((await fetch("/", { headers: { "if-none-match": `W/${etag}` } })).status).toBe(304);
     expect((await fetch("/", { headers: { "if-none-match": '"stale"' } })).status).toBe(200);
   });
-  it("describes every tool and the resource on the info page", async () => {
+  it("describes every tool, prompt and the resource on the info page", async () => {
     const html = await (await fetch("/")).text();
     const tools = await listTools();
     expect(tools.length).toBeGreaterThan(0);
     for (const { name } of tools) expect(html, name).toContain(`<dt><code>${name}</code>`);
+    const card = await (await fetch("/.well-known/mcp/server-card.json")).json();
+    for (const { name } of card.prompts) expect(html, name).toContain(`<dt><code>${name}</code>`);
     expect(html).toContain("tachtien://entry");
   });
   it("routes /mcp and /mcp/ to the MCP server", async () => {
@@ -76,6 +78,7 @@ describe("worker", () => {
     expect(card.supportedProtocolVersions).toContain("2025-06-18");
     expect(card.tools.map((t) => t.name)).toEqual((await listTools()).map((t) => t.name));
     expect(card.resources).toEqual([expect.objectContaining({ uri: "tachtien://entry" })]);
+    expect(card.prompts.map((p) => p.name)).toEqual(["uitleg", "herschrijf", "zin"]);
   });
   it("serves robots.txt with content signals", async () => {
     const res = await fetch("/robots.txt");
