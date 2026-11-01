@@ -36,11 +36,12 @@ workspace settings.
 | `define` | none | syllables, part of speech, IPA, definition, origin |
 | `examples` | `random?: boolean` | example dialogues, or one at random |
 | `mentions` | `source?: "twitter" \| "press" \| "cityguys"` | external mentions with title, source and URL |
-| `tachtienify` | `text: string` | text with vague large amounts and estimates of 20 or more replaced by *tachtien*, the count, and each replaced phrase with its index |
+| `tachtienify` | `text: string` | text with vague large amounts and estimates of 50 or more replaced by *tachtien*, the count, and each replaced phrase with its index |
 | `is_tachtien` | `amount: number \| string` | `{ isTachtien, reason }` |
 
-Estimates ("ongeveer honderd", "zo'n 30", "~200", "100+") are tachtien from
-20 up, because nobody counted them. Exact numbers, smaller estimates and
+Estimates ("ongeveer honderd", "zo'n 60", "~200", "100+") and lower bounds
+("meer dan 50", "ruim honderd") are tachtien from 50 up, because nobody
+counted them. Exact numbers, smaller estimates and
 years ("rond 2014") are not.
 
 ## Prompts

@@ -84,13 +84,13 @@ describe("isTachtien", () => {
     expect(isTachtien("tenten")).toEqual({ isTachtien: false, reason: expect.stringContaining("tellen") });
   });
   it(`accepts estimates of ${APPROX_MIN} or more`, () => {
-    for (const a of ["ongeveer honderd", "Zo'n 30 man", "rond de twintig", "~100", "100+", "20ish", "honderd of zo",
-      "ongeveer 1.000 mensen", "about two hundred", "ruim vijfentwintig", "ongeveer 80"]) {
+    for (const a of ["ongeveer honderd", "Zo'n 60 man", "rond de vijftig", "~100", "100+", "50ish", "honderd of zo",
+      "ongeveer 1.000 mensen", "about two hundred", "ruim vijfenvijftig", "ongeveer 80", "meer dan 50", "bijna honderd"]) {
       expect(isTachtien(a), a).toEqual({ isTachtien: true, reason: expect.stringContaining("geschat") });
     }
   });
   it("rejects small estimates, negated estimates and years", () => {
-    for (const a of ["zo'n 18 man", "ongeveer 3,5 liter", "ongeveer vijf"]) {
+    for (const a of ["zo'n 18 man", "ongeveer 3,5 liter", "zo'n 30 man", "meer dan 49", "rond de twintig"]) {
       expect(isTachtien(a), a).toEqual({ isTachtien: false, reason: expect.stringContaining("niet veel") });
     }
     expect(isTachtien("niet ongeveer honderd").reason).toContain("zelf");

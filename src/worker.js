@@ -116,7 +116,7 @@ const PAGE = layout({
         <dt><code>tachtienify</code></dt>
         <dd>Vervangt vage grote hoeveelheden en grote schattingen in een tekst door tachtien, in het Nederlands en Engels, en zegt waar. Exacte getallen en jaartallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes met ongeveer honderd man&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes met tachtien man&rdquo;.</dd>
         <dt><code>is_tachtien</code></dt>
-        <dd>Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n vijf&rdquo; niet. Een schatting telt vanaf twintig.</dd>
+        <dd>Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n dertig&rdquo; niet. Een schatting telt vanaf vijftig, ook &ldquo;meer dan&rdquo; of &ldquo;ruim&rdquo;.</dd>
       </dl>
       <h2>Prompts</h2>
       <p>Prompts start je zelf, bijvoorbeeld als slash-commando in je MCP-client.</p>

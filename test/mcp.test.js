@@ -47,10 +47,10 @@ describe("mcp", () => {
     expect(press.every((m) => m.source === "press")).toBe(true);
   });
   it("tachtienifies text", async () => {
-    expect(data(await call("tachtienify", { text: "heel veel bier, ongeveer 30" }))).toEqual({
+    expect(data(await call("tachtienify", { text: "heel veel bier, ongeveer 60" }))).toEqual({
       text: "tachtien bier, tachtien",
       replacements: 2,
-      replaced: [{ text: "heel veel", index: 0 }, { text: "ongeveer 30", index: 16 }],
+      replaced: [{ text: "heel veel", index: 0 }, { text: "ongeveer 60", index: 16 }],
     });
   });
   it("judges amounts given as number or text", async () => {

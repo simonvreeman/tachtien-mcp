@@ -3,7 +3,8 @@
  * imports. Tachtien means "ontelbaar veel", so vague large amounts are
  * tachtien and anything you can state as an exact number is not. An
  * estimate ("ongeveer honderd", "~100", "100+") was not counted either, so
- * it is tachtien too, as long as it is large (APPROX_MIN or more).
+ * it is tachtien too, as long as it is large (APPROX_MIN or more). A lower
+ * bound ("meer dan 50", "ruim honderd") counts as an estimate.
  */
 
 /** Vague large amounts that tachtienify replaces, Dutch and English. */
@@ -19,8 +20,8 @@ export const VAGUE_AMOUNTS = [
   "hundreds of thousands of", "millions of", "billions of",
 ];
 
-/** An estimate counts as tachtien from this value up: "ongeveer vijf" is not ontelbaar veel. */
-export const APPROX_MIN = 20;
+/** An estimate counts as tachtien from this value up: "zo'n 30 man" can still be counted, so it is not ontelbaar veel. */
+export const APPROX_MIN = 50;
 
 /** Words in front of a number that make it an estimate. */
 export const APPROX_BEFORE = [
