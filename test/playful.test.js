@@ -44,7 +44,7 @@ describe("tachtienify", () => {
     expect(tachtienify("ONGEVEER HONDERD").text).toBe("TACHTIEN");
   });
   it("leaves small estimates, years and times alone", () => {
-    for (const t of ["zo'n vijf koekjes", "rond 2014", "rond 20:00", "ongeveer 3,5 liter"]) {
+    for (const t of ["zo'n vijf koekjes", "rond 2014", "rond 20:00", "ongeveer 3,5 liter", "Bijna 100% bleef"]) {
       expect(tachtienify(t).text, t).toBe(t);
     }
   });
@@ -85,7 +85,8 @@ describe("isTachtien", () => {
   });
   it(`accepts estimates of ${APPROX_MIN} or more`, () => {
     for (const a of ["ongeveer honderd", "Zo'n 60 man", "rond de vijftig", "~100", "100+", "50ish", "honderd of zo",
-      "ongeveer 1.000 mensen", "about two hundred", "ruim vijfenvijftig", "ongeveer 80", "meer dan 50", "bijna honderd"]) {
+      "ongeveer 1.000 mensen", "about two hundred", "ruim vijfenvijftig", "ongeveer 80", "meer dan 50", "bijna honderd",
+      "ongeveer een miljoen", "about a hundred", "ongeveer 2000 mensen", "meer dan 2000 bezoekers"]) {
       expect(isTachtien(a), a).toEqual({ isTachtien: true, reason: expect.stringContaining("geschat") });
     }
   });
@@ -94,7 +95,7 @@ describe("isTachtien", () => {
       expect(isTachtien(a), a).toEqual({ isTachtien: false, reason: expect.stringContaining("niet veel") });
     }
     expect(isTachtien("niet ongeveer honderd").reason).toContain("zelf");
-    expect(isTachtien("rond 2014").reason).toContain("jaartal");
+    for (const a of ["rond 2014", "Around 2010", "circa 1900"]) expect(isTachtien(a).reason, a).toContain("jaartal");
   });
   it("respects negation before a vague amount", () => {
     for (const a of ["niet heel veel", "not a lot", "nee, zeker geen tachtien", "nooit talloze"]) {

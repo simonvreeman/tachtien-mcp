@@ -46,7 +46,6 @@ const alternation = (phrases) => [...phrases]
 const phraseRegex = (phrases, flags) =>
   new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation(phrases)})(?![\\p{L}\\p{N}])`, flags);
 
-
 // Number words. "een"/"one" only count inside a number ("eenentwintig",
 // "twenty-one"): alone they are usually an article ("een hoop").
 const NUMBER_WORDS = new Map([
@@ -69,8 +68,11 @@ const CONNECTORS = ["en", "ën", "and"];
 const REPLACE_RE = phraseRegex(VAGUE_AMOUNTS, "giu");
 const VAGUE_RE = phraseRegex([...VAGUE_AMOUNTS, ...ALSO_TACHTIEN], "iu");
 const NEGATION_RE = phraseRegex(["niet", "geen", "nee", "nooit", "allesbehalve", "not", "no", "never"], "iu");
-// A marker right before a number, at the end of the text in front of it.
-const APPROX_BEFORE_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation(APPROX_BEFORE)})\\s*$`, "iu");
+// A marker right before a number, at the end of the text in front of it,
+// maybe with an article: "ongeveer een miljoen", "about a hundred".
+const APPROX_BEFORE_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation(APPROX_BEFORE)})(?:\\s+(?:een|één|a|an))?\\s*$`, "iu");
+// Markers that also go with a date: "rond 2014" is a year, "ruim 2000" an amount.
+const DATE_MARKER_RE = /^(?:rond|circa|ca\.|around)$/i;
 const APPROX_AFTER_RE = /^(?:\+(?!\s*\d)|-?ish|-odd|\s+(?:of zo|or so|en nog wat|of meer|or more|odd))(?![\p{L}\p{N}])/iu;
 // A token start: a digit (or sign) not inside a number, or the first letter of a word.
 const START_RE = /(?<![\p{L}\p{N}.,])(?=[-+]?\d)|(?<![\p{L}\p{N}])(?=\p{L})/gu;
@@ -124,8 +126,8 @@ function readNumber(s, i) {
   if (digits) {
     const end = i + digits[0].length;
     const rest = s.slice(end);
-    // "20ish" is a number with a suffix; "20e", "3x" and "20:00" are not amounts.
-    if (/^[\p{L}\p{N}:]/u.test(rest) && !/^ish(?![\p{L}\p{N}])/iu.test(rest)) return undefined;
+    // "20ish" is a number with a suffix; "20e", "3x", "20:00" and "50%" are not amounts.
+    if (/^(?:[\p{L}\p{N}:]|\s*[%‰])/u.test(rest) && !/^ish(?![\p{L}\p{N}])/iu.test(rest)) return undefined;
     const thousands = digits[1];
     const value = Number(thousands ? digits[0].replaceAll(thousands, "") : digits[0].replace(",", "."));
     return { value, end, year: /^\d{4}$/.test(digits[0]) && value >= 1000 && value <= 2100 };
@@ -153,7 +155,7 @@ function readNumber(s, i) {
 /**
  * Every number in `s`, in order, as { start, end, value, approx, year }. For
  * an estimate, start and end include the marker ("ongeveer", "+"). A year
- * after a marker ("rond 2014") is a date, not an estimate.
+ * after a date marker ("rond 2014", "around 2010") is a date, not an estimate.
  */
 function findAmounts(s) {
   const amounts = [];
@@ -166,11 +168,11 @@ function findAmounts(s) {
     let start = m.index, end = num.end;
     const before = s.slice(Math.max(0, start - 40), start).match(APPROX_BEFORE_RE);
     const after = s.slice(end).match(APPROX_AFTER_RE);
-    const marked = Boolean(before || after);
-    const approx = marked && !num.year;
+    const year = num.year && !after && Boolean(before?.[0].trim().match(DATE_MARKER_RE));
+    const approx = Boolean(before || after) && !year;
     if (approx && before) start -= before[0].length;
     if (approx && after) end += after[0].length;
-    amounts.push({ start, end, value: num.value, approx, year: marked && num.year });
+    amounts.push({ start, end, value: num.value, approx, year });
     i = num.end;
   }
   return amounts;
