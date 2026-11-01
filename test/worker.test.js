@@ -87,6 +87,13 @@ describe("worker", () => {
     expect(body).toMatch(/User-agent: \*\nContent-Signal: search=yes, ai-input=yes, ai-train=yes\nAllow: \//);
     expect(body).toContain("Agentmap: https://tachtien.nl/.well-known/ai-catalog.json");
   });
+  it("serves no body for HEAD requests to static discovery files", async () => {
+    for (const path of ["/.well-known/mcp/server-card.json", "/robots.txt", "/.well-known/security.txt"]) {
+      const res = await fetch(path, { method: "HEAD" });
+      expect(res.status, path).toBe(200);
+      expect(await res.text(), path).toBe("");
+    }
+  });
   it("serves security.txt and sends favicon requests to tachtien.nl", async () => {
     const txt = await fetch("/.well-known/security.txt");
     expect(txt.headers.get("content-type")).toBe("text/plain; charset=utf-8");
@@ -103,5 +110,8 @@ describe("worker", () => {
     expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
     expect(await res.text()).toContain('<a href="/">');
     expect((await fetch("/", { method: "POST" })).status).toBe(405);
+    const cardPost = await fetch("/.well-known/mcp/server-card.json", { method: "POST" });
+    expect(cardPost.status).toBe(405);
+    expect(cardPost.headers.get("allow")).toBe("GET, HEAD");
   });
 });

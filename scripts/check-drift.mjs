@@ -10,6 +10,7 @@
  * Usage: npm run check:drift [-- <site url> [<server card url>]]
  */
 import { createHash } from "node:crypto";
+import { parse } from "parse5";
 import { entry } from "../src/entry.js";
 
 const url = process.argv[2] ?? entry.url;
@@ -29,21 +30,40 @@ const onSite = (absolute) => new URL(new URL(absolute).pathname, url).href;
 
 const html = await get(url);
 
-const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", middot: "·" };
-const toText = (fragment) => fragment
-  .replace(/<(script|style)[\s\S]*?<\/\1>/g, " ")
-  .replace(/<[^>]+>/g, "")
-  .replace(/&(#\d+|#x[\da-f]+|\w+);/gi, (m, e) =>
-    e[0] === "#" ? String.fromCodePoint(Number(e[1] === "x" ? `0${e.slice(1)}` : e.slice(1))) : ENTITIES[e] ?? m)
-  .replace(/\s+/g, " ")
-  .trim();
-const pageText = toText(html);
-const hrefs = new Set([...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]));
+const document = parse(html);
+const element = (node, name) => node.nodeName === name;
+const text = (node) => {
+  if (node.nodeName === "#text") return node.value;
+  if (element(node, "script") || element(node, "style")) return "";
+  return (node.childNodes ?? []).map(text).join("");
+};
+const clean = (value) => value.replace(/\s+/g, " ").trim();
+const walk = (node, visit) => {
+  visit(node);
+  for (const child of node.childNodes ?? []) walk(child, visit);
+};
+const hasList = (node) => {
+  let result = false;
+  walk(node, (child) => { if (child !== node && (element(child, "ol") || element(child, "ul"))) result = true; });
+  return result;
+};
+const pageText = clean(text(document));
+const hrefs = new Set();
+walk(document, (node) => {
+  if (!element(node, "a")) return;
+  const href = node.attrs?.find((attribute) => attribute.name === "href")?.value;
+  if (href) hrefs.add(href);
+});
 
-// The text of each <li> without a nested list, in the section under <h2>heading</h2>.
+// Leaf <li>s after a matching <h2>, until the next <h2>, independent of markup layout.
 const leafItems = (heading) => {
-  const section = html.split(/<h2>/).find((part) => part.startsWith(`${heading}</h2>`)) ?? "";
-  return [...section.matchAll(/<li>((?:(?!<li|<ol|<ul)[\s\S])*?)<\/li>/g)].map((m) => toText(m[1]));
+  let active = false;
+  const items = [];
+  walk(document, (node) => {
+    if (element(node, "h2")) active = clean(text(node)) === heading;
+    else if (active && element(node, "li") && !hasList(node)) items.push(clean(text(node)));
+  });
+  return items;
 };
 
 const texts = [

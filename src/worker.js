@@ -4,7 +4,7 @@
  * security.txt under /.well-known/. Everything else is an HTML 404.
  * Trailing slashes are normalised once here so the MCP handler sees /mcp.
  */
-import { handleMcp, MCP_PATH, serverCard } from "./mcp.js";
+import { handleMcp, MCP_PATH, PAGE_CONTENT, serverCard } from "./mcp.js";
 
 const ORIGIN = "https://mcp.tachtien.nl";
 const ENDPOINT = `${ORIGIN}${MCP_PATH}`;
@@ -84,6 +84,11 @@ ${body}  </body>
 </html>
 `;
 
+const definitionList = (items) => `      <dl>
+${items.map(({ name, description }) => `        <dt><code>${name}</code></dt>
+        <dd>${description}</dd>`).join("\n")}
+      </dl>`;
+
 const DESCRIPTION = "MCP-server voor het woord tachtien: ontelbaar veel.";
 const PAGE = layout({
   title: "Tachtien MCP",
@@ -115,30 +120,12 @@ const PAGE = layout({
         <li>Geef de server bijvoorbeeld de naam <code>Tachtien</code> en vul als endpoint <code>${ENDPOINT}</code> in.</li>
         <li>Kies geen authenticatie, maak de plugin aan en installeer hem. Gebruik daarna <code>@Tachtien</code> in een nieuwe chat.</li>
       </ol>
-      <p class="note">De mogelijkheid om eigen MCP-servers toe te voegen hangt af van je ChatGPT-abonnement en de instellingen van je workspace.</p>
+      <p class="note">De mogelijkheid om eigen MCP-servers toe te voegen hangt af van je ChatGPT-abonnement en de instellingen van je workspace. Lees de <a href="https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt">officiële ChatGPT-handleiding</a> voor de actuele stappen.</p>
       <h2>Tools</h2>
-      <dl>
-        <dt><code>define</code></dt>
-        <dd>Zoekt het woord op: lettergrepen, woordsoort, uitspraak (<code lang="nl-fonipa">tɑxtin</code>), definitie en herkomst.</dd>
-        <dt><code>examples</code></dt>
-        <dd>Voorbeeldzinnen met tachtien. Met <code>random: true</code> krijg je er één willekeurig.</dd>
-        <dt><code>mentions</code></dt>
-        <dd>Externe vermeldingen met link: tweets, pers en Cityguys. Filter met <code>source</code>: <code>twitter</code>, <code>press</code> of <code>cityguys</code>.</dd>
-        <dt><code>tachtienify</code></dt>
-        <dd>Vervangt vage grote hoeveelheden en grote schattingen in een tekst door tachtien, in het Nederlands en Engels, en zegt waar. Exacte getallen en jaartallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes met ongeveer honderd man&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes met tachtien man&rdquo;.</dd>
-        <dt><code>is_tachtien</code></dt>
-        <dd>Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n dertig&rdquo; niet. Een schatting telt vanaf vijftig, ook &ldquo;meer dan&rdquo; of &ldquo;ruim&rdquo;.</dd>
-      </dl>
+${definitionList(PAGE_CONTENT.tools)}
       <h2>Prompts</h2>
       <p>Prompts start je zelf, bijvoorbeeld als slash-commando in je MCP-client.</p>
-      <dl>
-        <dt><code>uitleg</code></dt>
-        <dd>Legt het woord uit met het hele artikel erbij. Met <code>taal: English</code> in het Engels.</dd>
-        <dt><code>herschrijf</code></dt>
-        <dd>Haalt je <code>tekst</code> door tachtienify en vraagt het model de grammatica rond elk tachtien recht te zetten.</dd>
-        <dt><code>zin</code></dt>
-        <dd>Verzint een nieuwe voorbeeldzin in de stijl van tachtien.nl, eventueel over een <code>onderwerp</code>.</dd>
-      </dl>
+${definitionList(PAGE_CONTENT.prompts)}
       <h2>Resource</h2>
       <dl>
         <dt><code>tachtien://entry</code></dt>
@@ -177,6 +164,10 @@ const etagMatches = (header, etag) =>
 
 const html = (request, body, status = 200, extra = {}) =>
   new Response(request.method === "HEAD" ? null : body, { status, headers: { ...PAGE_HEADERS, ...extra } });
+const plain = (request, body, headers) =>
+  new Response(request.method === "HEAD" ? null : body, { headers });
+const json = (request, data, headers) =>
+  request.method === "HEAD" ? new Response(null, { headers }) : Response.json(data, { headers });
 
 export default {
   async fetch(request, env, ctx) {
@@ -200,15 +191,13 @@ export default {
       return html(request, PAGE, 200, headers);
     }
     if (path === CARD_PATH) {
-      return Response.json(serverCard(), {
-        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=3600", "access-control-allow-origin": "*" },
-      });
+      return json(request, serverCard(), { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=3600", "access-control-allow-origin": "*" });
     }
     if (path === "/robots.txt") {
-      return new Response(ROBOTS_TXT, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" } });
+      return plain(request, ROBOTS_TXT, { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" });
     }
     if (path === "/.well-known/security.txt") {
-      return new Response(SECURITY_TXT, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" } });
+      return plain(request, SECURITY_TXT, { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" });
     }
     if (path === "/favicon.ico") return Response.redirect("https://tachtien.nl/favicon.ico", 301);
     return html(request, NOT_FOUND, 404);

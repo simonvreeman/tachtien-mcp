@@ -21,7 +21,7 @@ MCP server**. Name it, for example, `Tachtien`, enter
 finish creating it. Then install the plugin and use `@Tachtien` in a new chat.
 
 Whether you can add your own MCP servers depends on your ChatGPT plan and your
-workspace settings.
+workspace settings. See the [official ChatGPT setup guide](https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt) for current steps.
 
 ## Other compatible MCP clients
 

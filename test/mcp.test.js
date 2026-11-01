@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { handleMcp } from "../src/mcp.js";
+import { handleMcp, serverCard } from "../src/mcp.js";
 import pkg from "../package.json";
 
 const rpc = (body) => new Request("https://mcp.tachtien.nl/mcp", {
@@ -17,10 +17,12 @@ const call = async (name, args = {}) => (await send("tools/call", { name, argume
 const data = (result) => JSON.parse(result.content[0].text);
 
 describe("mcp", () => {
-  it("initializes and lists the five tools", async () => {
-    const init = await handleMcp(rpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } } }), {}, {});
-    expect(init.status).toBe(200);
-    expect((await parse(init)).result.serverInfo).toEqual({ name: "tachtien", version: pkg.version });
+  it("initializes with every advertised protocol version and lists the five tools", async () => {
+    for (const protocolVersion of serverCard().supportedProtocolVersions) {
+      const init = await handleMcp(rpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion, capabilities: {}, clientInfo: { name: "t", version: "0" } } }), {}, {});
+      expect(init.status, protocolVersion).toBe(200);
+      expect((await parse(init)).result.serverInfo, protocolVersion).toEqual({ name: "tachtien", version: pkg.version });
+    }
     const { result } = await send("tools/list");
     expect(result.tools.map((t) => t.name).sort()).toEqual(["define", "examples", "is_tachtien", "mentions", "tachtienify"]);
     for (const t of result.tools) {
@@ -72,6 +74,25 @@ describe("mcp", () => {
     const res = await handleMcp(req, {}, {});
     expect(res.status).toBe(200);
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
+  });
+  it("accepts a browser CORS preflight", async () => {
+    const req = new Request("https://mcp.tachtien.nl/mcp", {
+      method: "OPTIONS",
+      headers: { origin: "https://example.com", "access-control-request-method": "POST" },
+    });
+    const res = await handleMcp(req, {}, {});
+    expect(res.status).toBeLessThan(300);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+  });
+  it("rejects malformed JSON-RPC without a server error", async () => {
+    const req = new Request("https://mcp.tachtien.nl/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
+      body: "not JSON",
+    });
+    const res = await handleMcp(req, {}, {});
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBeLessThan(500);
   });
   it("reports invalid input as a tool error", async () => {
     const empty = await call("tachtienify", { text: "" });

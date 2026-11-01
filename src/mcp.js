@@ -32,6 +32,7 @@ const mention = z.object({ title: z.string(), source: z.enum(MENTION_SOURCES), u
 const TOOLS = {
   define: {
     description: "Define the Dutch word 'tachtien' (a cardinal number meaning 'ontelbaar veel', uncountably many): syllables, part of speech, IPA pronunciation, definition and origin, as on tachtien.nl. Content is in Dutch.",
+    pageDescription: "Zoekt het woord op: lettergrepen, woordsoort, uitspraak (<code lang=\"nl-fonipa\">tɑxtin</code>), definitie en herkomst.",
     inputSchema: z.object({}),
     outputSchema: z.object({
       word: z.string(),
@@ -45,6 +46,7 @@ const TOOLS = {
   },
   examples: {
     description: "Example sentences that use 'tachtien', in Dutch. Each example is a short dialogue of one or more lines.",
+    pageDescription: "Voorbeeldzinnen met tachtien. Met <code>random: true</code> krijg je er één willekeurig.",
     inputSchema: z.object({
       random: z.boolean().optional().describe("Return one example at random instead of all"),
     }),
@@ -52,6 +54,7 @@ const TOOLS = {
   },
   mentions: {
     description: "External mentions of 'tachtien' (tweets, press and Cityguys articles) with title, source and URL. The url is null for a mention without a link.",
+    pageDescription: "Externe vermeldingen met link: tweets, pers en Cityguys. Filter met <code>source</code>: <code>twitter</code>, <code>press</code> of <code>cityguys</code>.",
     inputSchema: z.object({
       source: z.enum(MENTION_SOURCES).optional().describe("Only mentions from this source"),
     }),
@@ -59,6 +62,7 @@ const TOOLS = {
   },
   tachtienify: {
     description: "Rewrite a text so that vague large amounts in Dutch or English ('heel veel', 'honderden', 'a lot of', 'countless', ...) and large estimates ('ongeveer honderd', '~200', '100+') become 'tachtien'. Exact numbers, small estimates and years are left alone. Returns the new text, the number of replacements and each replaced phrase with its index in the input.",
+    pageDescription: "Vervangt vage grote hoeveelheden en grote schattingen in een tekst door tachtien, in het Nederlands en Engels, en zegt waar. Exacte getallen en jaartallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes met ongeveer honderd man&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes met tachtien man&rdquo;.",
     inputSchema: z.object({
       text: z.string().min(1).max(5000).describe("The text to rewrite"),
     }),
@@ -70,6 +74,7 @@ const TOOLS = {
   },
   is_tachtien: {
     description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig, also inside a phrase like '18 biertjes'). Vague amounts like 'heel veel' or 'geen idee' do, and so do estimates of 50 or more, lower bounds included ('ongeveer honderd', 'meer dan 50', '100+'), because nobody counted; negation ('niet heel veel') makes either false.",
+    pageDescription: "Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n dertig&rdquo; niet. Een schatting telt vanaf vijftig, ook &ldquo;meer dan&rdquo; of &ldquo;ruim&rdquo;.",
     inputSchema: z.object({
       amount: z.union([z.number(), z.string().min(1).max(200)]).describe("A number, or an amount in words"),
     }),
@@ -87,6 +92,7 @@ const PROMPTS = {
   uitleg: {
     title: "Leg tachtien uit",
     description: "Explain the Dutch word tachtien (meaning, pronunciation, origin, an example) from the tachtien.nl entry.",
+    pageDescription: "Legt het woord uit met het hele artikel erbij. Met <code>taal: English</code> in het Engels.",
     argsSchema: z.object({
       taal: completable(z.string().describe("Language of the explanation: Nederlands or English"), startsWith(LANGUAGES)).optional(),
     }),
@@ -94,15 +100,23 @@ const PROMPTS = {
   herschrijf: {
     title: "Herschrijf met tachtien",
     description: "Rewrite a text with tachtien: the server replaces vague large amounts and estimates, then asks the model to fix the grammar around each replacement.",
+    pageDescription: "Haalt je <code>tekst</code> door tachtienify en vraagt het model de grammatica rond elk tachtien recht te zetten.",
     argsSchema: z.object({ tekst: z.string().min(1).max(5000).describe("The text to rewrite") }),
   },
   zin: {
     title: "Verzin een zin met tachtien",
     description: "Write a new Dutch example sentence with tachtien, in the style of the examples on tachtien.nl.",
+    pageDescription: "Verzint een nieuwe voorbeeldzin in de stijl van tachtien.nl, eventueel over een <code>onderwerp</code>.",
     argsSchema: z.object({
       onderwerp: completable(z.string().max(200).describe("What the sentence is about, for example kopstootjes"), startsWith(TOPICS)).optional(),
     }),
   },
+};
+
+/** Dutch display copy for the info page, derived from the registered MCP definitions. */
+export const PAGE_CONTENT = {
+  tools: Object.entries(TOOLS).map(([name, { pageDescription }]) => ({ name, description: pageDescription })),
+  prompts: Object.entries(PROMPTS).map(([name, { pageDescription }]) => ({ name, description: pageDescription })),
 };
 
 const userText = (text) => ({ role: "user", content: { type: "text", text } });
@@ -128,8 +142,10 @@ const toolResult = (name, fn) => async (args) => {
 
 function createServer() {
   const server = new McpServer(SERVER_INFO, { jsonSchemaValidator: new CfWorkerJsonSchemaValidator() });
-  const register = (name, fn) =>
-    server.registerTool(name, { ...TOOLS[name], annotations: READ_ONLY }, toolResult(name, fn));
+  const register = (name, fn) => {
+    const { pageDescription, ...definition } = TOOLS[name];
+    return server.registerTool(name, { ...definition, annotations: READ_ONLY }, toolResult(name, fn));
+  };
 
   register("define", () => {
     const { examples, mentions, ...definition } = entry;

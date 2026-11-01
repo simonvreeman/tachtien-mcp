@@ -14,6 +14,8 @@ npm run check:drift    # src/entry.js vs the live tachtien.nl; exits 1 on drift
 npm run deploy         # wrangler deploy
 ```
 
+GitHub Actions (`.github/workflows/verify.yml`) runs `npm test` on every push to main and every PR, and `check:drift` weekly and on demand. Deploys stay manual.
+
 ## Architecture
 
 ```
@@ -33,12 +35,12 @@ tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known
 - `src/entry.js` — the dictionary entry as frozen data, `entryMarkdown()`. Only content source.
 - `src/playful.js` — `tachtienify(text)`, `isTachtien(amount)`; pure, no MCP imports. `VAGUE_AMOUNTS`, `APPROX_BEFORE` and `APPROX_MIN` drive both, so whatever `is_tachtien` accepts, `tachtienify` replaces.
 - `src/mcp.js` — tool and prompt schemas at module scope; `createServer()` registers five read-only tools, three prompts (`uitleg`, `herschrijf`, `zin`, with completions) and resource `tachtien://entry`.
-- `scripts/check-drift.mjs` — Node script, not a test, so `npm test` never hits the network.
+- `scripts/check-drift.mjs` — Node script, not a test, so `npm test` never hits the network. Parses the site with `parse5`.
 
 ## Code style
 
 - Vanilla JS, ESM, no TypeScript, no build step. Same stack and idiom as `~/Documents/GitHub/seo`.
-- Runtime deps: `agents`, `@modelcontextprotocol/server`, `zod`. Dev: `wrangler`, `vitest`, `@cloudflare/vitest-plugin`.
+- Runtime deps: `agents`, `@modelcontextprotocol/server`, `zod`. Dev: `wrangler`, `vitest`, `@cloudflare/vitest-plugin`, `parse5`.
 - JSDoc on exported functions. Tool descriptions in English, content and `is_tachtien` reasons in Dutch.
 - Tests in `test/`, one file per module.
 
@@ -49,6 +51,6 @@ tachtien.nl advertises the card with `Link: <https://mcp.tachtien.nl/.well-known
 - **`createMcpHandler` takes a factory** (`() => McpServer`). Passing a server instance selects the deprecated SDK v1 path.
 - **Every tool has an `outputSchema`** and returns `structuredContent` plus the same data as JSON text. The SDK validates the result against the schema, so a new field in `entry.js` must be added to the schema too.
 - **Exact numbers are never tachtien**, by design. Estimates are, from `APPROX_MIN` (50) up: "ongeveer honderd", "~200", "100+", and lower bounds ("meer dan 50", "ruim honderd") count as estimates. A four-digit number from 1000 to 2100 after a marker is a year ("rond 2014"), not an estimate. A plain JSON number is always exact.
-- **The info page lists tools and prompts by hand** (in Dutch). `test/worker.test.js` fails when one is missing there; the server card needs no edit, it reads `TOOLS` and `PROMPTS`.
+- **The info page copy lives next to the definitions.** Each tool and prompt in `src/mcp.js` has a Dutch `pageDescription` (HTML) that the info page renders; it is stripped before `registerTool`, so clients never see it. A new tool or prompt needs one; the server card needs no edit, it reads `TOOLS` and `PROMPTS`.
 - **The page's ETag is computed at startup** from the HTML; compare it without `W/`, because Cloudflare weakens it when compressing.
 - **Invalid tool input is a tool error** (`isError: true`, "Input validation error ..."), not a JSON-RPC error; the SDK validates before the tool body runs.
