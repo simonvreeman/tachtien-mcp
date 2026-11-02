@@ -57,25 +57,27 @@ const layout = ({ title, head = "", body }) => `<!doctype html>
     <link rel="icon" href="https://tachtien.nl/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="https://tachtien.nl/apple-touch-icon.png">
 ${head}    <style>
-      body { color: rgba(0, 0, 0, .75); background: #fff; font: italic calc(1rem + .5vw)/1.618 Georgia, serif; padding: 5%; max-width: 40em; }
-      a { color: inherit; }
-      h1 { font-size: 2.5em; font-style: normal; font-weight: 100; letter-spacing: 2px; line-height: 1.2; margin: 0 0 .5em; }
-      h2, h3 { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-style: normal; line-height: 1.3; }
-      h2 { font-size: 1.35em; font-weight: 600; letter-spacing: 1px; margin: 2em 0 .5em; }
-      h3 { font-size: .9em; font-weight: 600; letter-spacing: .5px; margin: 1.75em 0 .4em; }
-      .lead { font-size: 1.15em; }
-      .note { font-size: .85em; color: rgba(0, 0, 0, .6); }
-      pre { font: normal .8em/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; padding: .75em 1em; background: rgba(0, 0, 0, .05); border-radius: 4px; }
-      code { font: normal .85em ui-monospace, Menlo, monospace; }
-      dt { margin-top: 1.25em; }
-      dt code { font-size: .95em; font-weight: 600; }
-      dd { margin-left: 0; }
-      footer { margin-top: 4em; padding-top: 1em; border-top: 1px solid rgba(0, 0, 0, .15); font-size: .8em; }
+      :root { --muted: rgba(0, 0, 0, .45); --tint: rgba(0, 0, 0, .05); --rule: rgba(0, 0, 0, .15); }
+      body { color: rgba(0, 0, 0, .8); background: #fff; font: calc(.8rem + .35vw)/1.65 ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; padding: 5%; max-width: 72ch; }
+      a { color: inherit; text-underline-offset: .2em; }
+      h1 { font-size: 2em; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; margin: 0 0 .75em; }
+      h2 { font-size: 1.25em; font-weight: 700; line-height: 1.3; margin: 2.5em 0 .75em; }
+      h3 { font-size: 1em; font-weight: 700; line-height: 1.4; margin: 1.75em 0 .5em; }
+      h2::before { content: "## "; color: var(--muted); }
+      h3::before { content: "### "; color: var(--muted); }
+      .note { font-size: .85em; color: var(--muted); }
+      pre { font: inherit; font-size: .9em; white-space: pre-wrap; overflow-wrap: anywhere; padding: .75em 1em; background: var(--tint); border-left: 3px solid var(--rule); }
+      .cmd::before { content: "$ "; color: var(--muted); user-select: none; }
+      code { font: inherit; padding: .05em .3em; background: var(--tint); border-radius: 3px; }
+      dt { margin-top: 1.5em; }
+      dt code { font-weight: 700; padding: 0; background: none; }
+      dt code::before { content: "> "; color: var(--muted); }
+      dd { margin-left: 2ch; }
+      ol { padding-left: 3ch; }
+      footer { margin-top: 4em; padding-top: 1em; border-top: 1px dashed var(--rule); font-size: .8em; color: var(--muted); }
       @media (prefers-color-scheme: dark) {
+        :root { --muted: rgba(255, 255, 255, .5); --tint: rgba(255, 255, 255, .08); --rule: rgba(255, 255, 255, .25); }
         body { background: #404040; color: rgba(255, 255, 255, .9); }
-        .note { color: rgba(255, 255, 255, .7); }
-        pre { background: rgba(255, 255, 255, .08); }
-        footer { border-color: rgba(255, 255, 255, .2); }
       }
     </style>
   </head>
@@ -113,7 +115,7 @@ const PAGE = layout({
       <pre>${ENDPOINT}</pre>
       <p class="note">Streamable HTTP, zonder login.</p>
       <h3>Claude Code</h3>
-      <pre>claude mcp add --transport http tachtien ${ENDPOINT}</pre>
+      <pre class="cmd">claude mcp add --transport http tachtien ${ENDPOINT}</pre>
       <h3>ChatGPT (op het web)</h3>
       <ol>
         <li>Open <strong>Plugins</strong>, kies <strong>+</strong> en daarna <strong>Add custom MCP server</strong>.</li>
