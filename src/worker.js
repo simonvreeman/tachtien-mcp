@@ -136,6 +136,7 @@ ${definitionList(PAGE_CONTENT.prompts)}
     </main>
     <footer>
       <p><a href="${CARD_PATH}">MCP server card</a> &middot; <a href="https://github.com/simonvreeman/tachtien-mcp">Broncode op GitHub</a> &middot; <a href="https://tachtien.nl/privacy">Privacy</a></p>
+      <p>Gemaakt door <a href="https://vreeman.com">Simon Vreeman</a>.</p>
     </footer>
 `,
 });

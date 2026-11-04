@@ -77,3 +77,7 @@ npm run deploy        # wrangler deploy to mcp.tachtien.nl
 
 The first deploy creates the `mcp.tachtien.nl` DNS record and certificate,
 provided the `tachtien.nl` zone is in the same Cloudflare account.
+
+## Author
+
+Made by [Simon Vreeman](https://vreeman.com).

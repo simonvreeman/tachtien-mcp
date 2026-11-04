@@ -27,6 +27,7 @@ describe("worker", () => {
     expect(html).toContain('<meta property="og:title"');
     expect(html).toContain('<link rel="icon" href="https://tachtien.nl/favicon.svg"');
     expect(html).toContain('href="https://tachtien.nl/privacy"');
+    expect(html).toContain('Gemaakt door <a href="https://vreeman.com">Simon Vreeman</a>');
     expect((await fetch("/", { method: "HEAD" })).status).toBe(200);
   });
   it("sends revalidation and security headers with the info page", async () => {
