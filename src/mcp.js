@@ -77,7 +77,10 @@ const TOOLS = {
     description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig, also inside a phrase like '18 biertjes'). Vague amounts like 'heel veel' or 'geen idee' do, and so do estimates of 50 or more, lower bounds included ('ongeveer honderd', 'meer dan 50', '100+'), because nobody counted; negation ('niet heel veel') makes either false.",
     pageDescription: "Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n dertig&rdquo; niet. Een schatting telt vanaf vijftig, ook &ldquo;meer dan&rdquo; of &ldquo;ruim&rdquo;.",
     inputSchema: z.object({
-      amount: z.union([z.number(), z.string().min(1).max(200)]).describe("A number, or an amount in words"),
+      // examples give test clients a valid value to send.
+      amount: z.union([z.number(), z.string().min(1).max(200)])
+        .describe("A number, or an amount in words")
+        .meta({ examples: ["heel veel", "ongeveer honderd", 18] }),
     }),
     outputSchema: z.object({ isTachtien: z.boolean(), reason: z.string() }),
   },
