@@ -76,7 +76,13 @@ describe("worker", () => {
     expect(card).toMatchObject({ name: "tachtien", version: pkg.version, endpoint: "https://mcp.tachtien.nl/mcp", transport: "http", authentication: "none" });
     expect(card.serverInfo).toEqual({ name: "tachtien", title: "Tachtien", version: pkg.version });
     expect(card.supportedProtocolVersions).toContain("2025-06-18");
-    expect(card.tools.map((t) => t.name)).toEqual((await listTools()).map((t) => t.name));
+    // Directory scanners read the card, so it carries the full tools/list definitions.
+    expect(card.tools).toEqual(await listTools());
+    for (const t of card.tools) {
+      expect(Object.keys(t.annotations).sort(), t.name).toEqual(["destructiveHint", "idempotentHint", "openWorldHint", "readOnlyHint"]);
+      expect(Object.values(t.annotations).every((v) => typeof v === "boolean"), t.name).toBe(true);
+      expect(t.inputSchema.type, t.name).toBe("object");
+    }
     expect(card.resources).toEqual([expect.objectContaining({ uri: "tachtien://entry" })]);
     expect(card.prompts.map((p) => p.name)).toEqual(["uitleg", "herschrijf", "zin"]);
   });
