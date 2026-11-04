@@ -27,6 +27,7 @@ describe("mcp", () => {
     expect(result.tools.map((t) => t.name).sort()).toEqual(["define", "examples", "is_tachtien", "mentions", "tachtienify"]);
     for (const t of result.tools) {
       expect(t.annotations?.readOnlyHint, t.name).toBe(true);
+      expect(t.title, t.name).toMatch(/^\S.* \/ \S.*$/);
       expect(t.outputSchema?.type, t.name).toBe("object");
     }
     const mentions = result.tools.find((t) => t.name === "mentions");
