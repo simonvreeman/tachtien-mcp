@@ -105,7 +105,7 @@ describe("worker", () => {
     const txt = await fetch("/.well-known/security.txt");
     expect(txt.headers.get("content-type")).toBe("text/plain; charset=utf-8");
     const body = await txt.text();
-    expect(body).toContain("Contact: mailto:simon@vreeman.com");
+    expect(body).toContain("Contact: https://vreeman.com/");
     expect(body).toContain("Canonical: https://mcp.tachtien.nl/.well-known/security.txt");
     const icon = await fetch("/favicon.ico");
     expect(icon.status).toBe(301);

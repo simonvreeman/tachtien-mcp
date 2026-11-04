@@ -31,7 +31,7 @@ const DISCOVERY_LINKS = [
   `</.well-known/security.txt>; rel="security"; type="text/plain"`,
 ].join(", ");
 
-const SECURITY_TXT = `Contact: mailto:simon@vreeman.com
+const SECURITY_TXT = `Contact: https://vreeman.com/
 Expires: 2027-10-31T00:00:00.000Z
 Preferred-Languages: nl, en
 Canonical: ${ORIGIN}/.well-known/security.txt
