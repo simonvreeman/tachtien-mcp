@@ -30,8 +30,10 @@ const link = z.object({ title: z.string(), url: z.string() });
 const example = z.object({ lines: z.array(z.string()) });
 const mention = z.object({ title: z.string(), source: z.enum(MENTION_SOURCES), url: z.string().nullable() });
 
+// Titles are shown in client UIs: Dutch first, then English, in one string.
 const TOOLS = {
   define: {
+    title: "Zoek tachtien op / Look up tachtien",
     description: "Define the Dutch word 'tachtien' (a cardinal number meaning 'ontelbaar veel', uncountably many): syllables, part of speech, IPA pronunciation, definition and origin, as on tachtien.nl. Content is in Dutch.",
     pageDescription: "Zoekt het woord op: lettergrepen, woordsoort, uitspraak (<code lang=\"nl-fonipa\">tɑxtin</code>), definitie en herkomst.",
     inputSchema: z.object({}),
@@ -46,6 +48,7 @@ const TOOLS = {
     }),
   },
   examples: {
+    title: "Voorbeeldzinnen / Example sentences",
     description: "Example sentences that use 'tachtien', in Dutch. Each example is a short dialogue of one or more lines.",
     pageDescription: "Voorbeeldzinnen met tachtien. Met <code>random: true</code> krijg je er één willekeurig.",
     inputSchema: z.object({
@@ -54,6 +57,7 @@ const TOOLS = {
     outputSchema: z.object({ examples: z.array(example) }),
   },
   mentions: {
+    title: "Vermeldingen / Mentions",
     description: "External mentions of 'tachtien' (tweets, press and Cityguys articles) with title, source and URL. The url is null for a mention without a link.",
     pageDescription: "Externe vermeldingen met link: tweets, pers en Cityguys. Filter met <code>source</code>: <code>twitter</code>, <code>press</code> of <code>cityguys</code>.",
     inputSchema: z.object({
@@ -62,6 +66,7 @@ const TOOLS = {
     outputSchema: z.object({ mentions: z.array(mention) }),
   },
   tachtienify: {
+    title: "Vervang vage aantallen / Replace vague amounts",
     description: "Rewrite a text so that vague large amounts in Dutch or English ('heel veel', 'honderden', 'a lot of', 'countless', ...) and large estimates ('ongeveer honderd', '~200', '100+') become 'tachtien'. Exact numbers, small estimates and years are left alone. Returns the new text, the number of replacements and each replaced phrase with its index in the input.",
     pageDescription: "Vervangt vage grote hoeveelheden en grote schattingen in een tekst door tachtien, in het Nederlands en Engels, en zegt waar. Exacte getallen en jaartallen blijven staan, want die zijn geteld. &ldquo;Gisteren heel veel kopstootjes met ongeveer honderd man&rdquo; wordt &ldquo;Gisteren tachtien kopstootjes met tachtien man&rdquo;.",
     inputSchema: z.object({
@@ -74,6 +79,7 @@ const TOOLS = {
     }),
   },
   is_tachtien: {
+    title: "Is het tachtien? / Is it tachtien?",
     description: "Judge whether an amount counts as 'tachtien' (uncountably many) and give a tongue-in-cheek reason in Dutch. Exact numbers never do (18 is achttien, 80 is tachtig, also inside a phrase like '18 biertjes'). Vague amounts like 'heel veel' or 'geen idee' do, and so do estimates of 50 or more, lower bounds included ('ongeveer honderd', 'meer dan 50', '100+'), because nobody counted; negation ('niet heel veel') makes either false.",
     pageDescription: "Bepaalt of een hoeveelheid tachtien is, met een reden. 18 is achttien, 80 is tachtig, &ldquo;geen idee&rdquo; en &ldquo;ongeveer honderd&rdquo; zijn wel tachtien, &ldquo;niet heel veel&rdquo; en &ldquo;zo&rsquo;n dertig&rdquo; niet. Een schatting telt vanaf vijftig, ook &ldquo;meer dan&rdquo; of &ldquo;ruim&rdquo;.",
     inputSchema: z.object({
@@ -90,8 +96,9 @@ const TOOLS = {
 const jsonSchema = (schema, io) => ({ type: "object", ...schema["~standard"].jsonSchema[io]({ target: "draft-2020-12" }) });
 
 /** Tool definitions as tools/list returns them, for the server card. */
-const listedTools = () => Object.entries(TOOLS).map(([name, { description, inputSchema, outputSchema }]) => ({
+const listedTools = () => Object.entries(TOOLS).map(([name, { title, description, inputSchema, outputSchema }]) => ({
   name,
+  title,
   description,
   inputSchema: jsonSchema(inputSchema, "input"),
   annotations: READ_ONLY,
@@ -152,7 +159,7 @@ const toolResult = (name, fn) => async (args) => {
     return text(await fn(args));
   } catch (e) {
     console.error("mcp tool error", { tool: name, message: e.message, stack: e.stack });
-    return toolError("Internal error");
+    return toolError(`Internal error in tool ${name}: the server failed while building the result, not because of your input. Try again; if it keeps failing, report it at https://github.com/simonvreeman/tachtien-mcp/issues`);
   }
 };
 
