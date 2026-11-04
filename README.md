@@ -15,6 +15,19 @@ vague amounts as tachtien, or ask whether something counts as tachtien.
 claude mcp add --transport http tachtien https://mcp.tachtien.nl/mcp
 ```
 
+## Cursor
+
+Add this to `.cursor/mcp.json` in your project, or to `~/.cursor/mcp.json` for all
+projects:
+
+```json
+{
+  "mcpServers": {
+    "tachtien": { "url": "https://mcp.tachtien.nl/mcp" }
+  }
+}
+```
+
 ## ChatGPT
 
 In ChatGPT on the web: open **Plugins**, choose **+** and then **Add custom

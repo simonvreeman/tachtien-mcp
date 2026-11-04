@@ -116,6 +116,13 @@ const PAGE = layout({
       <p class="note">Streamable HTTP, zonder login.</p>
       <h3>Claude Code</h3>
       <pre class="cmd">claude mcp add --transport http tachtien ${ENDPOINT}</pre>
+      <h3>Cursor</h3>
+      <p>Zet dit in <code>.cursor/mcp.json</code> in je project, of in <code>~/.cursor/mcp.json</code> voor al je projecten:</p>
+      <pre>{
+  "mcpServers": {
+    "tachtien": { "url": "${ENDPOINT}" }
+  }
+}</pre>
       <h3>ChatGPT (op het web)</h3>
       <ol>
         <li>Open <strong>Plugins</strong>, kies <strong>+</strong> en daarna <strong>Add custom MCP server</strong>.</li>
