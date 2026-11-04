@@ -32,6 +32,20 @@ describe("worker", () => {
     expect(html).toContain('Gemaakt door <a href="https://vreeman.com">Simon Vreeman</a>');
     expect((await fetch("/", { method: "HEAD" })).status).toBe(200);
   });
+  it("loads Google Analytics on the info page only, allowed by the CSP", async () => {
+    const res = await fetch("/");
+    const html = await res.text();
+    expect(html).toContain('<script src="https://www.googletagmanager.com/gtag/js?id=G-LEW9DW1CN3" async></script>');
+    const inline = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    expect(inline).toContain("'anonymize_ip': true");
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(inline));
+    const hash = btoa(String.fromCharCode(...new Uint8Array(digest)));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toContain(`'sha256-${hash}'`);
+    expect(csp).toContain("script-src https://*.googletagmanager.com");
+    expect(await (await fetch("/nope")).text()).not.toContain("googletagmanager");
+    expect(await (await fetch("/mcp", toolsList)).text()).not.toContain("googletagmanager");
+  });
   it("sends revalidation and security headers with the info page", async () => {
     const { headers } = await fetch("/");
     expect(headers.get("cache-control")).toBe("no-cache");

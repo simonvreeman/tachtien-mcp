@@ -18,7 +18,8 @@ const PAGE_METHODS = new Set(["GET", "HEAD"]);
 const PAGE_HEADERS = {
   "content-type": "text/html; charset=utf-8",
   "cache-control": "no-cache",
-  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src https://tachtien.nl; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests",
+  // Google Analytics as on tachtien.nl: its loader, the inline config by hash (GA_INLINE), and its endpoints.
+  "content-security-policy": "default-src 'none'; script-src https://*.googletagmanager.com 'sha256-G8JAw/yoKYG/eoU/rUQmcZMMckljIw4eUc3wxANoikM='; connect-src https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; style-src 'unsafe-inline'; img-src https://tachtien.nl https://*.google-analytics.com https://*.googletagmanager.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests",
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
   "cross-origin-opener-policy": "same-origin",
   "x-content-type-options": "nosniff",
@@ -43,6 +44,26 @@ Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 Agentmap: https://tachtien.nl/.well-known/ai-catalog.json
+`;
+
+// Same property and settings as tachtien.nl. The CSP allows this inline script by its sha256;
+// test/worker.test.js recomputes the hash, so change both together.
+const GA_ID = "G-LEW9DW1CN3";
+const GA_INLINE = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-LEW9DW1CN3', {
+        'link_attribution': true,
+        'transport_type': 'beacon',
+        'anonymize_ip': true,
+        'allow_google_signals': false,
+        'allow_ad_personalization_signals': false
+      });
+    `;
+const GA = `    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <script src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}" async></script>
+    <script>${GA_INLINE}</script>
 `;
 
 const layout = ({ title, head = "", body }) => `<!doctype html>
@@ -94,7 +115,7 @@ ${items.map(({ name, description }) => `        <dt><code>${name}</code></dt>
 const DESCRIPTION = "MCP-server voor het woord tachtien: ontelbaar veel.";
 const PAGE = layout({
   title: "Tachtien MCP",
-  head: `    <meta name="description" content="${DESCRIPTION}">
+  head: `${GA}    <meta name="description" content="${DESCRIPTION}">
     <link rel="canonical" href="${ORIGIN}/">
     <meta property="og:type" content="website">
     <meta property="og:url" content="${ORIGIN}/">
