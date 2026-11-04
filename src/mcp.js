@@ -23,6 +23,7 @@ const ENTRY_URI = "tachtien://entry";
 const ENTRY_RESOURCE = { title: "Tachtien (woordenboekartikel)", description: "The whole tachtien.nl entry as Markdown, in Dutch.", mimeType: "text/markdown" };
 // 2026-07-28 is served through server/discover; the handshake revisions through initialize.
 const PROTOCOL_VERSIONS = ["2026-07-28", ...SUPPORTED_PROTOCOL_VERSIONS];
+// Every tool only reads frozen data or computes on its input: no writes, no network.
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
 const link = z.object({ title: z.string(), url: z.string() });
@@ -81,6 +82,18 @@ const TOOLS = {
     outputSchema: z.object({ isTachtien: z.boolean(), reason: z.string() }),
   },
 };
+
+/** JSON Schema for a zod schema, converted the way the SDK does for tools/list. */
+const jsonSchema = (schema, io) => ({ type: "object", ...schema["~standard"].jsonSchema[io]({ target: "draft-2020-12" }) });
+
+/** Tool definitions as tools/list returns them, for the server card. */
+const listedTools = () => Object.entries(TOOLS).map(([name, { description, inputSchema, outputSchema }]) => ({
+  name,
+  description,
+  inputSchema: jsonSchema(inputSchema, "input"),
+  annotations: READ_ONLY,
+  outputSchema: jsonSchema(outputSchema, "output"),
+}));
 
 // Prompt arguments are strings; completable() feeds completion/complete.
 const startsWith = (options) => (value = "") =>
@@ -215,7 +228,7 @@ export function serverCard() {
     supportedProtocolVersions: PROTOCOL_VERSIONS,
     authentication: "none",
     capabilities: { tools: true, resources: true, prompts: true, completions: true },
-    tools: Object.entries(TOOLS).map(([name, { description }]) => ({ name, description })),
+    tools: listedTools(),
     prompts: Object.entries(PROMPTS).map(([name, { title, description }]) => ({ name, title, description })),
     resources: [{ uri: ENTRY_URI, name: "entry", ...ENTRY_RESOURCE }],
     links: {
