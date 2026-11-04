@@ -136,6 +136,7 @@ ${definitionList(PAGE_CONTENT.prompts)}
     </main>
     <footer>
       <p><a href="${CARD_PATH}">MCP server card</a> &middot; <a href="https://github.com/simonvreeman/tachtien-mcp">Broncode op GitHub</a> &middot; <a href="https://tachtien.nl/privacy">Privacy</a></p>
+      <p>Gemaakt door <a href="https://vreeman.com">Simon Vreeman</a>.</p>
     </footer>
 `,
 });
@@ -202,6 +203,8 @@ export default {
       return plain(request, SECURITY_TXT, { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" });
     }
     if (path === "/favicon.ico") return Response.redirect("https://tachtien.nl/favicon.ico", 301);
+    // The privacy policy lives on the site; scanners look for it on this host.
+    if (path === "/privacy") return Response.redirect("https://tachtien.nl/privacy", 301);
     return html(request, NOT_FOUND, 404);
   },
 };

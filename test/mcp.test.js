@@ -31,6 +31,9 @@ describe("mcp", () => {
     }
     const mentions = result.tools.find((t) => t.name === "mentions");
     expect(mentions.inputSchema.properties.source.enum).toEqual(["twitter", "press", "cityguys"]);
+    const { amount } = result.tools.find((t) => t.name === "is_tachtien").inputSchema.properties;
+    expect(amount.examples).toEqual(["heel veel", "ongeveer honderd", 18]);
+    for (const example of amount.examples) expect((await call("is_tachtien", { amount: example })).isError, String(example)).toBeFalsy();
   });
   it("defines the word", async () => {
     const result = await call("define");

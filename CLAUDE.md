@@ -26,6 +26,7 @@ mcp.tachtien.nl  →  src/worker.js
   GET      /.well-known/security.txt
   GET      /robots.txt                        Content-Signal: search, ai-input, ai-train all yes; Agentmap to tachtien.nl
   GET      /favicon.ico                       301 to tachtien.nl (icons live on the site)
+  GET      /privacy                           301 to tachtien.nl/privacy (scanners look for it on this host)
   else                                        HTML 404 (405 for non-GET/HEAD)
 ```
 

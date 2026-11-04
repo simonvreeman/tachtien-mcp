@@ -27,6 +27,7 @@ describe("worker", () => {
     expect(html).toContain('<meta property="og:title"');
     expect(html).toContain('<link rel="icon" href="https://tachtien.nl/favicon.svg"');
     expect(html).toContain('href="https://tachtien.nl/privacy"');
+    expect(html).toContain('Gemaakt door <a href="https://vreeman.com">Simon Vreeman</a>');
     expect((await fetch("/", { method: "HEAD" })).status).toBe(200);
   });
   it("sends revalidation and security headers with the info page", async () => {
@@ -100,7 +101,7 @@ describe("worker", () => {
       expect(await res.text(), path).toBe("");
     }
   });
-  it("serves security.txt and sends favicon requests to tachtien.nl", async () => {
+  it("serves security.txt and sends favicon and privacy requests to tachtien.nl", async () => {
     const txt = await fetch("/.well-known/security.txt");
     expect(txt.headers.get("content-type")).toBe("text/plain; charset=utf-8");
     const body = await txt.text();
@@ -109,6 +110,9 @@ describe("worker", () => {
     const icon = await fetch("/favicon.ico");
     expect(icon.status).toBe(301);
     expect(icon.headers.get("location")).toBe("https://tachtien.nl/favicon.ico");
+    const privacy = await fetch("/privacy");
+    expect(privacy.status).toBe(301);
+    expect(privacy.headers.get("location")).toBe("https://tachtien.nl/privacy");
   });
   it("answers an HTML 404 with a way back, and 405 for POST /", async () => {
     const res = await fetch("/nope");
