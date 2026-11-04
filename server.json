@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "nl.tachtien/tachtien",
+  "title": "Tachtien",
+  "description": "Look up the Dutch word tachtien (uncountably many) and rewrite vague amounts as tachtien.",
+  "version": "0.2.0",
+  "websiteUrl": "https://mcp.tachtien.nl/",
+  "repository": {
+    "url": "https://github.com/simonvreeman/tachtien-mcp",
+    "source": "github"
+  },
+  "icons": [
+    { "src": "https://tachtien.nl/favicon.svg", "mimeType": "image/svg+xml", "sizes": ["any"] },
+    { "src": "https://tachtien.nl/apple-touch-icon.png", "mimeType": "image/png", "sizes": ["180x180"] }
+  ],
+  "remotes": [
+    { "type": "streamable-http", "url": "https://mcp.tachtien.nl/mcp" }
+  ]
+}
