@@ -31,6 +31,24 @@ workspace settings. See the [official ChatGPT setup guide](https://help.openai.c
 { "mcpServers": { "tachtien": { "type": "http", "url": "https://mcp.tachtien.nl/mcp" } } }
 ```
 
+## Examples
+
+Ask Claude, or any MCP client, things like these. The answers are in Dutch,
+like the content.
+
+- **"What does the Dutch word tachtien mean, how do you pronounce it, and where
+  does it come from?"** uses `define`: *ontelbaar veel*, IPA `tɑxtin`, a slip
+  of the tongue from 2014, with sources.
+- **"Rewrite this message with tachtien: 'Gisteren heel veel kopstootjes
+  gedronken met ongeveer honderd man, en vandaag 3 aspirines.'"** uses
+  `tachtienify`: "Gisteren tachtien kopstootjes gedronken met tachtien man, en
+  vandaag 3 aspirines." The exact 3 stays, because it was counted.
+- **"I have more than 50 unread emails. Does that count as tachtien? And what
+  about exactly 80?"** uses `is_tachtien`: more than 50 is tachtien, because
+  nobody counted; 80 is not, that is *tachtig*.
+- **"Where has tachtien been mentioned in the press?"** uses `mentions` with
+  `source: "press"`: four articles with links.
+
 ## Tools
 
 | Tool | Input | Returns |
