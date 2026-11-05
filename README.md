@@ -1,6 +1,7 @@
 # Tachtien MCP
 
 [![M8ven Score](https://m8ven.ai/badge/mcp/simonvreeman-tachtien-mcp-1sqwbn?v=f29c77532839c08436d8a1300bcdd3d7)](https://m8ven.ai/mcp/simonvreeman-tachtien-mcp-1sqwbn?s=readme)
+[![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/simonvreeman/tachtien-mcp)
 
 An MCP server for the Dutch word [tachtien](https://tachtien.nl): *ontelbaar
 veel*, uncountably many. Look up the word, its examples and mentions, rewrite
