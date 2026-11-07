@@ -12,6 +12,7 @@ describe("tachtienify", () => {
   it("replaces Dutch and English in one text and keeps a capital", () => {
     expect(tachtienify("Honderden mensen en a lot of beers")).toMatchObject({ text: "Tachtien mensen en tachtien beers", replacements: 2 });
     expect(tachtienify("Thousands of reasons").text).toBe("Tachtien reasons");
+    expect(tachtienify("About one hundred people came")).toMatchObject({ text: "Tachtien people came", replaced: [{ text: "About one hundred", index: 0 }] });
   });
   it("counts repeated matches", () => {
     expect(tachtienify("Countless, countless nights")).toMatchObject({ text: "Tachtien, tachtien nights", replacements: 2 });
@@ -74,7 +75,7 @@ describe("isTachtien", () => {
   it("finds a number inside a phrase, in digits or words", () => {
     expect(isTachtien("18 biertjes").reason).toContain("achttien");
     expect(isTachtien("tachtig man").reason).toContain("tachtig");
-    for (const a of ["honderd", "een miljoen", "two thousand", "tweehonderdvijftig", "eenentwintig", "tweeëntwintig"]) {
+    for (const a of ["honderd", "een miljoen", "two thousand", "tweehonderdvijftig", "eenentwintig", "tweeëntwintig", "one hundred"]) {
       expect(isTachtien(a), a).toEqual({ isTachtien: false, reason: expect.stringContaining("geteld") });
     }
   });
@@ -86,7 +87,7 @@ describe("isTachtien", () => {
   it(`accepts estimates of ${APPROX_MIN} or more`, () => {
     for (const a of ["ongeveer honderd", "Zo'n 60 man", "rond de vijftig", "~100", "100+", "50ish", "honderd of zo",
       "ongeveer 1.000 mensen", "about two hundred", "ruim vijfenvijftig", "ongeveer 80", "meer dan 50", "bijna honderd",
-      "ongeveer een miljoen", "about a hundred", "ongeveer 2000 mensen", "meer dan 2000 bezoekers", "rond 1500 man", "around 2000 people"]) {
+      "ongeveer een miljoen", "about a hundred", "about one hundred", "roughly one million", "about one thousand people", "ongeveer 2000 mensen", "meer dan 2000 bezoekers", "rond 1500 man", "around 2000 people"]) {
       expect(isTachtien(a), a).toEqual({ isTachtien: true, reason: expect.stringContaining("geschat") });
     }
   });
