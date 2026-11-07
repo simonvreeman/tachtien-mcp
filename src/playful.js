@@ -69,8 +69,9 @@ const REPLACE_RE = phraseRegex(VAGUE_AMOUNTS, "giu");
 const VAGUE_RE = phraseRegex([...VAGUE_AMOUNTS, ...ALSO_TACHTIEN], "iu");
 const NEGATION_RE = phraseRegex(["niet", "geen", "nee", "nooit", "allesbehalve", "not", "no", "never"], "iu");
 // A marker right before a number, at the end of the text in front of it,
-// maybe with an article: "ongeveer een miljoen", "about a hundred".
-const APPROX_BEFORE_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation(APPROX_BEFORE)})(?:\\s+(?:een|één|a|an))?\\s*$`, "iu");
+// maybe with an article or "one": "ongeveer een miljoen", "about a hundred",
+// "about one hundred" ("one" alone never starts a number, see LONE_ARTICLES).
+const APPROX_BEFORE_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation(APPROX_BEFORE)})(?:\\s+(?:een|één|a|an|one))?\\s*$`, "iu");
 // Markers that also go with a date: "rond 2014" is a year, "ruim 2000" an amount.
 const DATE_MARKER_RE = /^(?:rond|circa|ca\.|around)$/i;
 // A count word after the number beats a date marker: "rond 1500 man" is an amount.
