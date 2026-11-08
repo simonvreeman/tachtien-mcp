@@ -109,4 +109,4 @@ if (missing.length) {
   console.error(`${url} and the MCP have drifted apart:\n${missing.map((m) => `  - ${m}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`OK: ${texts.length} texts, ${links.length} links, ${siteExamples.length} examples and ${siteMentions.length} mentions match ${url}; ${skills.length} skill digest and ${webmcpNames.length} WebMCP tools match`);
+console.log(`OK: ${texts.length} texts, ${links.length} links, ${siteExamples.length} example lines and ${siteMentions.length} mentions match ${url}; ${skills.length} skill digest and ${webmcpNames.length} WebMCP tools match`);
