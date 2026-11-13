@@ -18,11 +18,11 @@ export const entry = deepFreeze({
   pronunciation: { ipa: "tɑxtin" },
   definition: "Ontelbaar veel.",
   origin: {
-    text: "Verspreking van Julia van den Bergh in 2014, die gelijk werd geadopteerd door @ditisdesteven als één van zijn favoriete woorden.",
+    text: "Samentrekking van tachtig (80) en achttien (18). Ontstaan in 2014 als verspreking van Julia van den Bergh, die gelijk werd geadopteerd door @ditisdesteven (juli 2014) als één van zijn favoriete woorden. Julia van den Bergh gebruikte het woord later ook op Twitter (mei 2016).",
     year: 2014,
     links: [
+      { title: "@ditisdesteven (juli 2014)", url: "https://twitter.com/ditisdesteven/status/485465659695202305" },
       { title: "Julia van den Bergh", url: "https://twitter.com/jeweetweljulia/status/730801201332273152" },
-      { title: "@ditisdesteven", url: "https://twitter.com/ditisdesteven/status/485465659695202305" },
     ],
   },
   examples: [

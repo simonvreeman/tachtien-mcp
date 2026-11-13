@@ -13,6 +13,7 @@ describe("entry", () => {
     });
     expect(entry.origin.year).toBe(2014);
     expect(entry.origin.text).toContain("Julia van den Bergh");
+    expect(entry.origin.text).toContain("Samentrekking van tachtig (80) en achttien (18).");
   });
   it("has two example dialogues", () => {
     expect(entry.examples).toHaveLength(2);

@@ -51,8 +51,9 @@ Ask Claude, or any MCP client, things like these. The answers are in Dutch,
 like the content.
 
 - **"What does the Dutch word tachtien mean, how do you pronounce it, and where
-  does it come from?"** uses `define`: *ontelbaar veel*, IPA `tɑxtin`, a slip
-  of the tongue from 2014, with sources.
+  does it come from?"** uses `define`: *ontelbaar veel*, IPA `tɑxtin`, a blend
+  of *tachtig* (80) and *achttien* (18) that began as a slip of the tongue in
+  2014, with sources.
 - **"Rewrite this message with tachtien: 'Gisteren heel veel kopstootjes
   gedronken met ongeveer honderd man, en vandaag 3 aspirines.'"** uses
   `tachtienify`: "Gisteren tachtien kopstootjes gedronken met tachtien man, en
